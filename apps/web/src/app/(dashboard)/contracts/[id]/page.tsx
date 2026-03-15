@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Send, Download, Trash2, ScrollText,
+  ArrowLeft, Send, Download, Trash2, ScrollText, Pencil,
   User, Building2, Copy, Check, CheckCircle2,
   PenLine, Calendar, DollarSign,
 } from 'lucide-react';
@@ -85,6 +85,11 @@ export default function ContractDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {contract.status !== 'SIGNED' && (
+            <Button size="sm" variant="secondary" onClick={() => router.push(`/contracts/${id}/edit`)}>
+              <Pencil className="h-4 w-4" /> Edit
+            </Button>
+          )}
           {contract.status === 'DRAFT' && (
             <Button
               size="sm"

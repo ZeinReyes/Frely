@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Send, Download, Trash2, FileText,
   Calendar, User, Building2, CheckCircle2, Clock,
-  Copy, Check,
+  Copy, Check, Pencil,
 } from 'lucide-react';
 import { useProposal, useSendProposal, useDeleteProposal } from '@/hooks/useProposals';
 import { ProposalStatusBadge } from '@/components/ui/ProposalStatusBadge';
@@ -81,6 +81,11 @@ export default function ProposalDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {proposal.status === 'DRAFT' && (
+            <Button size="sm" variant="secondary" onClick={() => router.push(`/proposals/${id}/edit`)}>
+              <Pencil className="h-4 w-4" /> Edit
+            </Button>
+          )}
           {proposal.status === 'DRAFT' && (
             <Button
               size="sm"

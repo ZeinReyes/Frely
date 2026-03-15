@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, FileText, MoreHorizontal, Send,
-  Download, Trash2, ExternalLink,
+  Download, Trash2, ExternalLink, Pencil
 } from 'lucide-react';
 import { useProposals, useSendProposal, useDeleteProposal } from '@/hooks/useProposals';
 import { ProposalStatusBadge } from '@/components/ui/ProposalStatusBadge';
@@ -118,6 +118,14 @@ export default function ProposalsPage() {
                             >
                               <ExternalLink className="h-4 w-4" /> View
                             </button>
+                            {proposal.status === 'DRAFT' && (
+                              <button
+                                onClick={() => { router.push(`/proposals/${proposal.id}/edit`); setOpenMenu(null); }}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Pencil className="h-4 w-4" /> Edit
+                              </button>
+                            )}
                             {proposal.status === 'DRAFT' && (
                               <button
                                 onClick={() => { sendProposal.mutate(proposal.id); setOpenMenu(null); }}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, ScrollText, MoreHorizontal, Send,
-  Download, Trash2, ExternalLink, Copy, Check,
+  Download, Trash2, ExternalLink, Copy, Check, Pencil,
 } from 'lucide-react';
 import { useContracts, useSendContract, useDeleteContract } from '@/hooks/useProposals';
 import { ContractStatusBadge } from '@/components/ui/ProposalStatusBadge';
@@ -123,6 +123,14 @@ export default function ContractsPage() {
                             >
                               <ExternalLink className="h-4 w-4" /> View
                             </button>
+                            {contract.status !== 'SIGNED' && (
+                              <button
+                                onClick={() => { router.push(`/contracts/${contract.id}/edit`); setOpenMenu(null); }}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Pencil className="h-4 w-4" /> Edit
+                              </button>
+                            )}
                             {contract.status === 'DRAFT' && (
                               <button
                                 onClick={() => { sendContract.mutate(contract.id); setOpenMenu(null); }}

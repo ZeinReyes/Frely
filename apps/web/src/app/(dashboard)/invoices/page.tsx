@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Plus, Receipt, MoreHorizontal, Send,
   Download, Trash2, CheckCircle2, ExternalLink,
-  TrendingUp, Clock, AlertCircle, DollarSign,
+  TrendingUp, Clock, AlertCircle, DollarSign, Pencil,
 } from 'lucide-react';
 import {
   useInvoices, useInvoiceStats, useSendInvoice,
@@ -177,6 +177,14 @@ export default function InvoicesPage() {
                             >
                               <ExternalLink className="h-4 w-4" /> View
                             </button>
+                            {invoice.status === 'DRAFT' && (
+                              <button
+                                onClick={() => { router.push(`/invoices/${invoice.id}/edit`); setOpenMenu(null); }}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                <Pencil className="h-4 w-4" /> Edit
+                              </button>
+                            )}
                             {invoice.status === 'DRAFT' && (
                               <button
                                 onClick={() => { sendInvoice.mutate(invoice.id); setOpenMenu(null); }}

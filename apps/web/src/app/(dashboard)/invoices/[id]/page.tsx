@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Send, Download, Trash2, Receipt,
+  ArrowLeft, Send, Download, Trash2, Receipt, Pencil,
   User, Building2, CheckCircle2, ExternalLink,
   Copy, Check, AlertCircle, Calendar,
 } from 'lucide-react';
@@ -83,6 +83,11 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          {invoice.status === 'DRAFT' && (
+            <Button size="sm" variant="secondary" onClick={() => router.push(`/invoices/${id}/edit`)}>
+              <Pencil className="h-4 w-4" /> Edit
+            </Button>
+          )}
           {invoice.status === 'DRAFT' && (
             <>
               <Button size="sm" variant="secondary" onClick={() => sendInvoice.mutate(id)} loading={sendInvoice.isPending}>
