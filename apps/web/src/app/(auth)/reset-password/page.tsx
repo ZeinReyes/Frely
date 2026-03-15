@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, CheckCircle } from 'lucide-react';
-import { resetPassword } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/useToast';
 
@@ -32,8 +32,8 @@ export default function ResetPasswordPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const { toast }    = useToast();
-  const [showPw, setShowPw]   = useState(false);
-  const [done, setDone]       = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [done, setDone]     = useState(false);
 
   const token = searchParams.get('token') || '';
 
@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const { error } = await resetPassword({
+    const { error } = await authClient.resetPassword({
       newPassword: data.password,
       token,
     });

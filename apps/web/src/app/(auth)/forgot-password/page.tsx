@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
-import { forgetPassword } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/useToast';
@@ -29,9 +29,9 @@ export default function ForgotPasswordPage() {
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: FormData) => {
-    const { error } = await forgetPassword({
-      email:       data.email,
-      redirectTo:  `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    const { error } = await authClient.requestPasswordReset({
+      email:      data.email,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
     });
 
     if (error) {

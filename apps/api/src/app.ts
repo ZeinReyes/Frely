@@ -30,7 +30,21 @@ app.use(
 );
 
 // ─────────────────────────────────────────
-// Rate Limiting
+// General Middleware
+// ─────────────────────────────────────────
+app.use(compression());
+app.use(cookieParser());
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('combined'));
+}
+
+// ─────────────────────────────────────────
+// Better Auth — must be BEFORE rate limiting and body parsers
+// ─────────────────────────────────────────
+app.all('/api/auth/*', (req, res) => toNodeHandler(auth)(req, res));
+
+// ─────────────────────────────────────────
+// Rate Limiting (AFTER Better Auth)
 // ─────────────────────────────────────────
 app.use(
   '/api/',
@@ -44,34 +58,13 @@ app.use(
 );
 
 app.use(
-  '/api/auth/sign-in',
+  '/api/user/sign-in',
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many login attempts' } },
   })
 );
-
-// ─────────────────────────────────────────
-// General Middleware
-// ─────────────────────────────────────────
-app.use(compression());
-app.use(cookieParser());
-if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined'));
-}
-
-// ─────────────────────────────────────────
-// Better Auth — handles ALL auth routes:
-//   POST /api/auth/sign-up/email
-//   POST /api/auth/sign-in/email
-//   POST /api/auth/sign-out
-//   POST /api/auth/forget-password
-//   POST /api/auth/reset-password
-//   GET  /api/auth/verify-email
-//   GET  /api/auth/get-session
-// ─────────────────────────────────────────
-app.all('/api/auth/*', toNodeHandler(auth));
 
 // ─────────────────────────────────────────
 // JSON body parser (AFTER Better Auth)
@@ -92,18 +85,18 @@ app.get('/health', (_req, res) => {
 app.use('/api/user', authRoutes);
 
 // Future routes added here per module:
-// app.use('/api/clients',      authenticate, clientRoutes);
-// app.use('/api/projects',     authenticate, projectRoutes);
-// app.use('/api/tasks',        authenticate, taskRoutes);
-// app.use('/api/invoices',     authenticate, invoiceRoutes);
-// app.use('/api/proposals',    authenticate, proposalRoutes);
-// app.use('/api/contracts',    authenticate, contractRoutes);
-// app.use('/api/files',        authenticate, fileRoutes);
-// app.use('/api/notifications',authenticate, notificationRoutes);
-// app.use('/api/ai',           authenticate, aiRoutes);
-// app.use('/api/analytics',    authenticate, analyticsRoutes);
-// app.use('/api/portal',       portalRoutes);
-// app.use('/api/webhooks',     webhookRoutes);
+// app.use('/api/clients',       authenticate, clientRoutes);
+// app.use('/api/projects',      authenticate, projectRoutes);
+// app.use('/api/tasks',         authenticate, taskRoutes);
+// app.use('/api/invoices',      authenticate, invoiceRoutes);
+// app.use('/api/proposals',     authenticate, proposalRoutes);
+// app.use('/api/contracts',     authenticate, contractRoutes);
+// app.use('/api/files',         authenticate, fileRoutes);
+// app.use('/api/notifications', authenticate, notificationRoutes);
+// app.use('/api/ai',            authenticate, aiRoutes);
+// app.use('/api/analytics',     authenticate, analyticsRoutes);
+// app.use('/api/portal',        portalRoutes);
+// app.use('/api/webhooks',      webhookRoutes);
 
 // ─────────────────────────────────────────
 // Error Handling (must be last)

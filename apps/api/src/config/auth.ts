@@ -30,6 +30,7 @@ export const auth = betterAuth({
 
   // App URL
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
+  basePath: '/api/auth',
   secret: process.env.BETTER_AUTH_SECRET!,
 
   // Email & Password auth
