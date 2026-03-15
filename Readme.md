@@ -128,7 +128,7 @@ npm run dev:web
 | 8 | Proposals & Contracts | ✅ Upcoming |
 | 9 | Invoices & Payments | ✅ Upcoming |
 | 10 | Payment Reminders | ✅ Upcoming |
-| 11 | Notifications | 🔲 Upcoming |
+| 11 | Notifications | ✅ Upcoming |
 | 12 | AI Features | 🔲 Upcoming |
 | 13 | Analytics Dashboard | 🔲 Upcoming |
 | 14 | Settings & White-labeling | 🔲 Upcoming |

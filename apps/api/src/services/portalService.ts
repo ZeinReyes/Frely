@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { notifyMilestoneApproved } from './notificationService';
 import { AppError } from '../utils/AppError';
 
 // ─────────────────────────────────────────
@@ -159,7 +160,15 @@ export async function approveMilestone(token: string, milestoneId: string) {
   const updated = await prisma.milestone.update({
     where: { id: milestoneId },
     data:  { status: 'APPROVED' },
+    include: { project: { select: { id: true, name: true, userId: true } } },
   });
+
+  // Notify freelancer
+  await notifyMilestoneApproved(
+    updated.project.userId,
+    { id: milestoneId, title: updated.title },
+    { id: updated.project.id, name: updated.project.name }
+  ).catch(() => {});
 
   return updated;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell } from 'lucide-react';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import { useAuth } from '@/hooks/useAuth';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -29,11 +29,7 @@ export function Header() {
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
 
       <div className="flex items-center gap-3">
-        {/* Notifications bell */}
-        <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-          <Bell className="h-5 w-5" />
-          {/* Unread badge — wired in Module 11 */}
-        </button>
+        <NotificationBell />
 
         {/* Avatar */}
         <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">

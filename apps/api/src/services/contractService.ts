@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { notifyContractSigned } from './notificationService';
 import { AppError } from '../utils/AppError';
 import { generatePDF } from '../utils/pdfGenerator';
 import type {
@@ -150,6 +151,13 @@ export async function signContract(signToken: string, input: SignContractInput) 
       client: { select: { id: true, name: true, email: true, company: true } },
     },
   });
+  // Notify freelancer
+  await notifyContractSigned(updated.userId, {
+    id:            updated.id,
+    title:         updated.title,
+    signatureName: updated.signatureName || input.signatureName,
+  }).catch(() => {});
+
   return updated;
 }
 

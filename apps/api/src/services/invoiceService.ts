@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import { generateInvoicePDF } from '../utils/invoicePdfGenerator';
 import { createPayPalInvoice, cancelPayPalInvoice } from './paypalService';
 import { scheduleReminders, cancelReminders } from '../jobs/reminderQueue';
+import { notifyInvoicePaid } from './notificationService';
 import type { CreateInvoiceInput, UpdateInvoiceInput } from '../validators/invoiceValidators';
 
 function generateNumber(): string {
@@ -256,6 +257,14 @@ export async function markInvoicePaid(userId: string, invoiceId: string, paidAt?
       client: { select: { id: true, name: true, email: true, company: true } },
     },
   });
+
+  // Notify freelancer
+  await notifyInvoicePaid(updated.userId, {
+    id:            updated.id,
+    invoiceNumber: updated.invoiceNumber,
+    total:         Number(updated.total),
+    currency:      updated.currency,
+  }).catch(() => {});
 
   return updated;
 }
