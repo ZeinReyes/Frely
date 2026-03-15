@@ -10,9 +10,13 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './config/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { authenticate } from './middleware/authenticate';
 
 // Routes
 import authRoutes from './routes/auth';
+import clientRoutes from './routes/clients';
+import projectRoutes from './routes/projects';
+import taskRoutes    from './routes/tasks';
 
 const app = express();
 
@@ -85,9 +89,9 @@ app.get('/health', (_req, res) => {
 app.use('/api/user', authRoutes);
 
 // Future routes added here per module:
-// app.use('/api/clients',       authenticate, clientRoutes);
-// app.use('/api/projects',      authenticate, projectRoutes);
-// app.use('/api/tasks',         authenticate, taskRoutes);
+app.use('/api/clients',       authenticate, clientRoutes);
+app.use('/api/projects',      authenticate, projectRoutes);
+app.use('/api/tasks',         authenticate, taskRoutes);
 // app.use('/api/invoices',      authenticate, invoiceRoutes);
 // app.use('/api/proposals',     authenticate, proposalRoutes);
 // app.use('/api/contracts',     authenticate, contractRoutes);
