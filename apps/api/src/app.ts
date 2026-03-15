@@ -18,6 +18,7 @@ import clientRoutes from './routes/clients';
 import projectRoutes from './routes/projects';
 import taskRoutes    from './routes/tasks';
 import milestoneRoutes, { milestoneItemRouter } from './routes/milestones';
+import timeEntryRoutes from './routes/timeEntries';
 
 const app = express();
 
@@ -95,6 +96,7 @@ app.use('/api/projects',      authenticate, projectRoutes);
 app.use('/api/tasks',         authenticate, taskRoutes);
 app.use('/api/projects/:projectId/milestones', authenticate, milestoneRoutes);
 app.use('/api/milestones', authenticate, milestoneItemRouter);
+app.use('/api/time-entries', authenticate, timeEntryRoutes);
 // app.use('/api/invoices',      authenticate, invoiceRoutes);
 // app.use('/api/proposals',     authenticate, proposalRoutes);
 // app.use('/api/contracts',     authenticate, contractRoutes);

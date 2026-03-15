@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { TimerWidget } from '@/components/ui/TimerWidget';
 
 const NAV = [
   { href: '/dashboard',     label: 'Dashboard',  icon: LayoutDashboard },
@@ -52,6 +53,9 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Timer widget */}
+      <TimerWidget />
 
       {/* Bottom */}
       <div className="border-t border-gray-200 p-3 space-y-0.5">
