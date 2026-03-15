@@ -7,14 +7,16 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCreateTask, useUpdateTask } from '@/hooks/useProjects';
+import { useMilestones } from '@/hooks/useMilestones';
 import type { Task, TaskStatus } from '@/types/project';
 
 const schema = z.object({
-  title:       z.string().min(1, 'Title is required').trim(),
-  description: z.string().optional(),
-  status:      z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
-  priority:    z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-  dueDate:     z.string().optional(),
+  title:           z.string().min(1, 'Title is required').trim(),
+  description:     z.string().optional(),
+  status:          z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
+  priority:        z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  dueDate:         z.string().optional(),
+  milestoneId:     z.string().optional(),
   isClientVisible: z.boolean(),
 });
 
@@ -32,6 +34,9 @@ export function TaskFormModal({ projectId, task, defaultStatus = 'TODO', onClose
   const createTask = useCreateTask(projectId);
   const updateTask = useUpdateTask(task?.id || '', projectId);
 
+  const { data: milestonesData } = useMilestones(projectId);
+  const milestones = milestonesData?.milestones || [];
+
   const {
     register,
     handleSubmit,
@@ -44,6 +49,7 @@ export function TaskFormModal({ projectId, task, defaultStatus = 'TODO', onClose
       status:          task?.status          || defaultStatus,
       priority:        task?.priority        || 'MEDIUM',
       dueDate:         task?.dueDate         ? task.dueDate.split('T')[0] : '',
+      milestoneId:     task?.milestoneId     || '',
       isClientVisible: task?.isClientVisible ?? true,
     },
   });
@@ -52,7 +58,8 @@ export function TaskFormModal({ projectId, task, defaultStatus = 'TODO', onClose
     const payload = {
       ...data,
       projectId,
-      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+      milestoneId: data.milestoneId || undefined,
+      dueDate:     data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
     };
 
     if (isEdit) {
@@ -115,6 +122,19 @@ export function TaskFormModal({ projectId, task, defaultStatus = 'TODO', onClose
               </select>
             </div>
           </div>
+
+          {/* Milestone */}
+          {milestones.length > 0 && (
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">Milestone</label>
+              <select className="input" {...register('milestoneId')}>
+                <option value="">No milestone</option>
+                {milestones.map((m) => (
+                  <option key={m.id} value={m.id}>{m.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <Input
             label="Due date"

@@ -25,7 +25,7 @@ export async function getMilestones(userId: string, projectId: string) {
         select: { tasks: true, invoices: true },
       },
       tasks: {
-        select: { id: true, status: true },
+        select: { id: true, title: true, status: true },
       },
     },
   });
