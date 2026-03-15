@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Pencil, Trash2, Plus, Users,
+  ArrowLeft, Pencil, Trash2, Plus,
   Calendar, DollarSign, LayoutGrid,
 } from 'lucide-react';
 import { useProject, useKanbanBoard, useDeleteProject } from '@/hooks/useProjects';
@@ -11,14 +11,17 @@ import { KanbanBoardView } from '@/components/ui/KanbanBoard';
 import { ProjectStatusBadge } from '@/components/ui/ProjectStatusBadge';
 import { ProjectFormModal } from '@/components/ui/ProjectFormModal';
 import { TaskFormModal } from '@/components/ui/TaskFormModal';
+import { MilestoneTracker } from '@/components/ui/MilestoneTracker';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatCurrency, getInitials } from '@/lib/utils';
 
 export default function ProjectDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const router   = useRouter();
-  const [showEdit,      setShowEdit]      = useState(false);
-  const [showAddTask,   setShowAddTask]   = useState(false);
+  const [showEdit,    setShowEdit]    = useState(false);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [showDelete,  setShowDelete]  = useState(false);
 
   const { data: projectData, isLoading: projectLoading } = useProject(id);
   const { data: boardData,   isLoading: boardLoading }   = useKanbanBoard(id);
@@ -34,7 +37,6 @@ export default function ProjectDetailPage() {
   const progress  = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   const handleDelete = async () => {
-    if (!confirm('Delete this project? This will also delete all tasks and files.')) return;
     await deleteProject.mutateAsync(id);
     router.push('/projects');
   };
@@ -53,7 +55,6 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="page-container">
-      {/* Back */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
@@ -61,7 +62,6 @@ export default function ProjectDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back to projects
       </button>
 
-      {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -100,13 +100,12 @@ export default function ProjectDetailPage() {
           <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
             <Pencil className="h-4 w-4" /> Edit
           </Button>
-          <Button variant="danger" size="sm" onClick={handleDelete}>
+          <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Progress bar */}
       {totalTasks > 0 && (
         <div className="card p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -127,6 +126,11 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
+      {/* Milestones */}
+      <div className="card p-5 mb-6">
+        <MilestoneTracker projectId={id} />
+      </div>
+
       {/* Kanban board */}
       <div className="mb-2 flex items-center gap-2">
         <LayoutGrid className="h-4 w-4 text-gray-400" />
@@ -141,7 +145,16 @@ export default function ProjectDetailPage() {
         <KanbanBoardView projectId={id} board={board} />
       ) : null}
 
-      {/* Modals */}
+      {showDelete && (
+        <ConfirmModal
+          title="Delete project"
+          description="Are you sure you want to delete this project? This will also delete all tasks, milestones, files, and time entries. This action cannot be undone."
+          confirmLabel="Delete project"
+          loading={deleteProject.isPending}
+          onConfirm={handleDelete}
+          onClose={() => setShowDelete(false)}
+        />
+      )}
       {showEdit    && <ProjectFormModal project={project} onClose={() => setShowEdit(false)} />}
       {showAddTask && <TaskFormModal projectId={id} onClose={() => setShowAddTask(false)} />}
     </div>

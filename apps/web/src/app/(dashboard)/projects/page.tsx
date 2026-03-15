@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Search, FolderKanban, MoreHorizontal,
-  Pencil, Trash2, ExternalLink, Users,
+  Pencil, Trash2, ExternalLink,
 } from 'lucide-react';
 import { useProjects, useDeleteProject } from '@/hooks/useProjects';
 import { ProjectStatusBadge } from '@/components/ui/ProjectStatusBadge';
 import { ProjectFormModal } from '@/components/ui/ProjectFormModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatCurrency, getInitials } from '@/lib/utils';
 import type { Project, ProjectStatus } from '@/types/project';
@@ -23,12 +24,13 @@ const STATUS_FILTERS: { label: string; value: ProjectStatus | 'ALL' }[] = [
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [search,       setSearch]       = useState('');
-  const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'ALL'>('ALL');
-  const [showCreate,   setShowCreate]   = useState(false);
-  const [editProject,  setEditProject]  = useState<Project | null>(null);
-  const [openMenu,     setOpenMenu]     = useState<string | null>(null);
-  const deleteProject = useDeleteProject();
+  const [search,        setSearch]        = useState('');
+  const [statusFilter,  setStatusFilter]  = useState<ProjectStatus | 'ALL'>('ALL');
+  const [showCreate,    setShowCreate]    = useState(false);
+  const [editProject,   setEditProject]   = useState<Project | null>(null);
+  const [deleteProject, setDeleteProject] = useState<Project | null>(null);
+  const [openMenu,      setOpenMenu]      = useState<string | null>(null);
+  const deleteProjectMutation = useDeleteProject();
 
   const { data, isLoading } = useProjects({
     search: search || undefined,
@@ -39,9 +41,10 @@ export default function ProjectsPage() {
   const projects: Project[] = data?.data || [];
   const total: number       = data?.pagination?.total || 0;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this project? This will also delete all tasks and files.')) return;
-    await deleteProject.mutateAsync(id);
+  const handleDelete = async () => {
+    if (!deleteProject) return;
+    await deleteProjectMutation.mutateAsync(deleteProject.id);
+    setDeleteProject(null);
   };
 
   return (
@@ -145,7 +148,7 @@ export default function ProjectsPage() {
                           <Pencil className="h-4 w-4" /> Edit
                         </button>
                         <button
-                          onClick={() => { handleDelete(project.id); setOpenMenu(null); }}
+                          onClick={() => { setDeleteProject(project); setOpenMenu(null); }}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" /> Delete
@@ -186,8 +189,18 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {showCreate  && <ProjectFormModal onClose={() => setShowCreate(false)} />}
-      {editProject && <ProjectFormModal project={editProject} onClose={() => setEditProject(null)} />}
+      {showCreate    && <ProjectFormModal onClose={() => setShowCreate(false)} />}
+      {editProject   && <ProjectFormModal project={editProject} onClose={() => setEditProject(null)} />}
+      {deleteProject && (
+        <ConfirmModal
+          title="Delete project"
+          description={`Are you sure you want to delete "${deleteProject.name}"? This will also delete all tasks, milestones, files, and time entries. This action cannot be undone.`}
+          confirmLabel="Delete project"
+          loading={deleteProjectMutation.isPending}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteProject(null)}
+        />
+      )}
     </div>
   );
 }
