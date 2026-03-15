@@ -119,15 +119,15 @@ npm run dev:web
 | # | Module | Status |
 |---|---|---|
 | 1 | Project Setup + Auth | ✅ Complete |
-| 2 | Client Management (CRM) | 🔲 Upcoming |
-| 3 | Project & Task Management | 🔲 Upcoming |
-| 4 | Milestone Tracking | 🔲 Upcoming |
-| 5 | Time Tracker | 🔲 Upcoming |
-| 6 | File Management | 🔲 Upcoming |
-| 7 | Client Portal | 🔲 Upcoming |
-| 8 | Proposals & Contracts | 🔲 Upcoming |
-| 9 | Invoices & Payments | 🔲 Upcoming |
-| 10 | Payment Reminders | 🔲 Upcoming |
+| 2 | Client Management (CRM) | ✅ Upcoming |
+| 3 | Project & Task Management | ✅ Upcoming |
+| 4 | Milestone Tracking | ✅ Upcoming |
+| 5 | Time Tracker | ✅ Upcoming |
+| 6 | File Management | ✅ Upcoming |
+| 7 | Client Portal | ✅ Upcoming |
+| 8 | Proposals & Contracts | ✅ Upcoming |
+| 9 | Invoices & Payments | ✅ Upcoming |
+| 10 | Payment Reminders | ✅ Upcoming |
 | 11 | Notifications | 🔲 Upcoming |
 | 12 | AI Features | 🔲 Upcoming |
 | 13 | Analytics Dashboard | 🔲 Upcoming |

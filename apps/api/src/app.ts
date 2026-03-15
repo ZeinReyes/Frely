@@ -24,6 +24,7 @@ import fileRoutes      from './routes/files';
 import portalRoutes    from './routes/portal';
 import proposalRoutes  from './routes/proposals';
 import invoiceRoutes   from './routes/invoices';
+import reminderRoutes  from './routes/reminders';
 
 const app = express();
 
@@ -118,22 +119,26 @@ app.use('/api/time-entries', authenticate, timeEntryRoutes);
 app.use('/api/files',        authenticate, fileRoutes);
 app.use('/api/portal',       portalRoutes);
 app.use('/api',              authenticate, proposalRoutes);
-app.use('/api/invoices',     authenticate, invoiceRoutes); // proposals + contracts
+app.use('/api/invoices',     authenticate, invoiceRoutes);
+app.use('/api/invoices/:invoiceId/reminders', authenticate, reminderRoutes); // proposals + contracts
 app.use('/api/sign',         proposalRoutes); // public signing — no auth // no auth — token-based
 // app.use('/api/invoices',     authenticate, invoiceRoutes);
+app.use('/api/invoices/:invoiceId/reminders', authenticate, reminderRoutes);
 // app.use('/api/proposals',    authenticate, proposalRoutes);
 // app.use('/api/contracts',    authenticate, contractRoutes);
 // app.use('/api/files',        authenticate, fileRoutes);
 app.use('/api/portal',       portalRoutes);
 app.use('/api',              authenticate, proposalRoutes);
-app.use('/api/invoices',     authenticate, invoiceRoutes); // proposals + contracts
+app.use('/api/invoices',     authenticate, invoiceRoutes);
+app.use('/api/invoices/:invoiceId/reminders', authenticate, reminderRoutes); // proposals + contracts
 app.use('/api/sign',         proposalRoutes); // public signing — no auth // no auth — token-based
 // app.use('/api/notifications',authenticate, notificationRoutes);
 // app.use('/api/ai',           authenticate, aiRoutes);
 // app.use('/api/analytics',    authenticate, analyticsRoutes);
 // app.use('/api/portal',       portalRoutes);
 app.use('/api',              authenticate, proposalRoutes);
-app.use('/api/invoices',     authenticate, invoiceRoutes); // proposals + contracts
+app.use('/api/invoices',     authenticate, invoiceRoutes);
+app.use('/api/invoices/:invoiceId/reminders', authenticate, reminderRoutes); // proposals + contracts
 app.use('/api/sign',         proposalRoutes); // public signing — no auth
 // app.use('/api/webhooks',     webhookRoutes);
 
@@ -142,5 +147,10 @@ app.use('/api/sign',         proposalRoutes); // public signing — no auth
 // ─────────────────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
+
+// Start reminder worker
+import('./jobs/reminderQueue').then(({ startReminderWorker }) => {
+  startReminderWorker();
+}).catch(err => console.error('Failed to start reminder worker:', err));
 
 export default app;

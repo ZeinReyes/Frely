@@ -11,6 +11,7 @@ import {
   useInvoice, useSendInvoice, useSendInvoicePayPal,
   useMarkInvoicePaid, useDeleteInvoice, invoicesApi,
 } from '@/hooks/useInvoices';
+import { ReminderPanel } from '@/components/ui/ReminderPanel';
 import { InvoiceStatusBadge } from '@/components/ui/InvoiceStatusBadge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
@@ -295,6 +296,13 @@ export default function InvoiceDetailPage() {
               </button>
             )}
           </div>
+
+          {/* Reminders */}
+          <ReminderPanel
+            invoiceId={id}
+            status={invoice.status}
+            hasDueDate={!!invoice.dueDate}
+          />
         </div>
       </div>
 

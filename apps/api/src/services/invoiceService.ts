@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
 import { generateInvoicePDF } from '../utils/invoicePdfGenerator';
 import { createPayPalInvoice, cancelPayPalInvoice } from './paypalService';
+import { scheduleReminders, cancelReminders } from '../jobs/reminderQueue';
 import type { CreateInvoiceInput, UpdateInvoiceInput } from '../validators/invoiceValidators';
 
 function generateNumber(): string {
@@ -177,6 +178,11 @@ export async function sendInvoice(userId: string, invoiceId: string) {
     data:  { status: 'SENT' },
   });
 
+  // Auto-schedule reminders if due date set
+  if (invoice.dueDate) {
+    await scheduleReminders(invoiceId, invoice.dueDate).catch(() => {});
+  }
+
   return updated;
 }
 
@@ -237,6 +243,8 @@ export async function sendInvoiceViaPayPal(userId: string, invoiceId: string) {
 export async function markInvoicePaid(userId: string, invoiceId: string, paidAt?: string) {
   const invoice = await prisma.invoice.findFirst({ where: { id: invoiceId, userId } });
   if (!invoice) throw AppError.notFound('Invoice not found');
+
+  await cancelReminders(invoiceId).catch(() => {});
 
   const updated = await prisma.invoice.update({
     where: { id: invoiceId },
