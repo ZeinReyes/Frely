@@ -12,6 +12,7 @@ import { HealthScore } from '@/components/ui/HealthScore';
 import { ClientFormModal } from '@/components/ui/ClientFormModal';
 import { DeleteClientModal } from '@/components/ui/DeleteClientModal';
 import { Button } from '@/components/ui/button';
+import { FileBrowser } from '@/components/ui/FileBrowser';
 import { getInitials, formatDate, formatCurrency } from '@/lib/utils';
 
 export default function ClientDetailPage() {
@@ -45,11 +46,16 @@ export default function ClientDetailPage() {
   }
 
   if (!client) {
-    return <div className="page-container"><p className="text-gray-500">Client not found.</p></div>;
+    return (
+      <div className="page-container">
+        <p className="text-gray-500">Client not found.</p>
+      </div>
+    );
   }
 
   return (
     <div className="page-container">
+      {/* Back button */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
@@ -57,6 +63,7 @@ export default function ClientDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back to clients
       </button>
 
+      {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
@@ -84,7 +91,9 @@ export default function ClientDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left column — details */}
         <div className="space-y-4">
+          {/* Contact info */}
           <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Information</h3>
             <ul className="space-y-3">
@@ -107,6 +116,7 @@ export default function ClientDetailPage() {
             </ul>
           </div>
 
+          {/* Notes */}
           {client.notes && (
             <div className="card p-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">Notes</h3>
@@ -114,6 +124,7 @@ export default function ClientDetailPage() {
             </div>
           )}
 
+          {/* Tags */}
           {client.tags.length > 0 && (
             <div className="card p-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Tags</h3>
@@ -125,6 +136,12 @@ export default function ClientDetailPage() {
             </div>
           )}
 
+          {/* Files */}
+          <div className="card p-5">
+            <FileBrowser clientId={client.id} />
+          </div>
+
+          {/* Portal link */}
           <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Client Portal</h3>
             <p className="text-xs text-gray-500 mb-3">Share this link with your client so they can view project progress.</p>
@@ -136,6 +153,7 @@ export default function ClientDetailPage() {
             </Button>
           </div>
 
+          {/* Meta */}
           <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Details</h3>
             <dl className="space-y-2 text-sm">
@@ -155,7 +173,9 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
+        {/* Right column — projects + invoices */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Projects */}
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -181,7 +201,9 @@ export default function ClientDetailPage() {
                   {projects.map((p: { id: string; name: string; status: string; _count: { tasks: number }; budget?: number | null }) => (
                     <tr key={p.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/projects/${p.id}`)}>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{p.name}</td>
-                      <td className="px-4 py-3 hidden sm:table-cell"><span className="badge-default">{p.status}</span></td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        <span className="badge-default">{p.status}</span>
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{p._count.tasks}</td>
                       <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">
                         {p.budget ? formatCurrency(Number(p.budget)) : '—'}
@@ -193,6 +215,7 @@ export default function ClientDetailPage() {
             )}
           </div>
 
+          {/* Invoices */}
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b border-gray-200">
               <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -239,6 +262,7 @@ export default function ClientDetailPage() {
         </div>
       </div>
 
+      {/* Modals */}
       {showEdit   && <ClientFormModal client={client} onClose={() => setShowEdit(false)} />}
       {showDelete && (
         <DeleteClientModal

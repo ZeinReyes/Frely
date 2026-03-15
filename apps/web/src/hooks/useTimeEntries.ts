@@ -28,7 +28,7 @@ export function useActiveTimer() {
   return useQuery({
     queryKey:        TIME_KEYS.active,
     queryFn:         () => timeEntriesApi.getActive(),
-    refetchInterval: 1000, // poll every second to keep elapsed time fresh
+    refetchInterval: 10000, // poll every second to keep elapsed time fresh
   });
 }
 
