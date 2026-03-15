@@ -1,6 +1,3 @@
-Readme · MD
-Copy
-
 # Vyrn
  
 **Your work. Your clients. One place.**
@@ -136,4 +133,3 @@ npm run dev:web
 | 13 | Analytics Dashboard | 🔲 Upcoming |
 | 14 | Settings & White-labeling | 🔲 Upcoming |
 | 15 | CI/CD + Deployment | 🔲 Upcoming |
- 
