@@ -21,6 +21,7 @@ import taskRoutes      from './routes/tasks';
 import milestoneRoutes, { milestoneItemRouter } from './routes/milestones';
 import timeEntryRoutes from './routes/timeEntries';
 import fileRoutes      from './routes/files';
+import portalRoutes    from './routes/portal';
 
 const app = express();
 
@@ -44,7 +45,7 @@ app.use(
   '/api/',
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 1000,
+    max: 200,
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } },
@@ -113,10 +114,12 @@ app.use('/api/projects/:projectId/milestones', authenticate, milestoneRoutes);
 app.use('/api/milestones', authenticate, milestoneItemRouter);
 app.use('/api/time-entries', authenticate, timeEntryRoutes);
 app.use('/api/files',        authenticate, fileRoutes);
+app.use('/api/portal',       portalRoutes); // no auth — token-based
 // app.use('/api/invoices',     authenticate, invoiceRoutes);
 // app.use('/api/proposals',    authenticate, proposalRoutes);
 // app.use('/api/contracts',    authenticate, contractRoutes);
 // app.use('/api/files',        authenticate, fileRoutes);
+app.use('/api/portal',       portalRoutes); // no auth — token-based
 // app.use('/api/notifications',authenticate, notificationRoutes);
 // app.use('/api/ai',           authenticate, aiRoutes);
 // app.use('/api/analytics',    authenticate, analyticsRoutes);
