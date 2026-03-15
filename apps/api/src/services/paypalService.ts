@@ -78,12 +78,12 @@ export async function createPayPalInvoice(input: PayPalInvoiceInput): Promise<Pa
       currency_code:  input.currency,
       note:           input.notes || '',
       payment_term: input.dueDate
-        ? { term_type: 'DUE_ON_DATE', due_date: input.dueDate.split('T')[0] }
+        ? { term_type: 'DUE_ON_DATE_SPECIFIED', due_date: input.dueDate.split('T')[0] }  // Fixed: was 'DUE_ON_DATE'
         : { term_type: 'NET_30' },
     },
     invoicer: {
       name:  { full_name: input.freelancerName },
-      email_address: input.freelancerEmail,
+      email_address: process.env.PAYPAL_INVOICER_EMAIL || input.freelancerEmail,
     },
     primary_recipients: [
       {
