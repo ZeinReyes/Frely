@@ -12,6 +12,7 @@ import { auth } from './config/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { authenticate } from './middleware/authenticate';
+import { requireAdmin }  from './middleware/requireAdmin';
 
 // Routes
 import authRoutes         from './routes/auth';
@@ -31,6 +32,7 @@ import notificationRoutes from './routes/notifications';
 import aiRoutes           from './routes/ai';
 import analyticsRoutes    from './routes/analytics';
 import settingsRoutes     from './routes/settings';
+import adminRoutes        from './routes/admin';
 
 const app = express();
 
@@ -100,7 +102,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Health Check
 // ─────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'Frely-api', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'vyrn-api', timestamp: new Date().toISOString() });
 });
 
 // ─────────────────────────────────────────
@@ -118,6 +120,15 @@ app.use('/api/projects/:projectId/milestones', authenticate, milestoneRoutes);
 app.use('/api/milestones', authenticate, milestoneItemRouter);
 app.use('/api/time-entries', authenticate, timeEntryRoutes);
 app.use('/api/files',     authenticate, fileRoutes);
+
+// Public landing content (no auth)
+app.get('/api/public/landing', async (_req, res, next) => {
+  try {
+    const adminSvc = await import('./services/adminService');
+    const [content, plans] = await Promise.all([adminSvc.getLandingContent(), adminSvc.getPlans()]);
+    res.json({ success: true, data: { content, plans } });
+  } catch (error) { next(error); }
+});
 
 // Portal — public (token-based, no auth)
 app.use('/api/portal', portalRoutes);
@@ -144,6 +155,9 @@ app.use('/api/analytics', authenticate, analyticsRoutes);
 
 // Settings
 app.use('/api/settings', authenticate, settingsRoutes);
+
+// Admin
+app.use('/api/admin', authenticate, requireAdmin, adminRoutes);
 
 // ─────────────────────────────────────────
 // Error Handling (must be last)

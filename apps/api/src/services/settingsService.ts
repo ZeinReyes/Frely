@@ -14,6 +14,7 @@ export async function getProfile(userId: string) {
       fullName:  true,
       timezone:  true,
       plan:      true,
+      role:      true,
       image:     true,
       createdAt: true,
     },

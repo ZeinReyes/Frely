@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────
-// BETTER AUTH REQUIRED TABLES
-// ─────────────────────────────────────────
-
 model User {
   id            String    @id @default(uuid())
   name          String
@@ -20,13 +16,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Frely-specific fields
   fullName         String    @default("")
   timezone         String    @default("UTC")
   plan             Plan      @default(STARTER)
+  role             String    @default("USER")
   stripeCustomerId String?   @unique
 
-  // Relations
   sessions      Session[]
   accounts      Account[]
   branding      Branding?
@@ -86,10 +81,6 @@ model Verification {
   @@map("verifications")
 }
 
-// ─────────────────────────────────────────
-// ENUMS
-// ─────────────────────────────────────────
-
 enum Plan {
   STARTER
   SOLO
@@ -134,23 +125,6 @@ enum Priority {
   CRITICAL
 }
 
-enum ProposalStatus {
-  DRAFT
-  SENT
-  VIEWED
-  ACCEPTED
-  REJECTED
-  EXPIRED
-}
-
-enum ContractStatus {
-  DRAFT
-  SENT
-  PARTIALLY_SIGNED
-  FULLY_SIGNED
-  VOIDED
-}
-
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -160,10 +134,6 @@ enum InvoiceStatus {
   OVERDUE
   CANCELLED
 }
-
-// ─────────────────────────────────────────
-// BRANDING
-// ─────────────────────────────────────────
 
 model Branding {
   id           String  @id @default(uuid())
@@ -177,10 +147,6 @@ model Branding {
 
   @@map("brandings")
 }
-
-// ─────────────────────────────────────────
-// CLIENTS
-// ─────────────────────────────────────────
 
 model Client {
   id          String       @id @default(uuid())
@@ -208,10 +174,6 @@ model Client {
   @@map("clients")
 }
 
-// ─────────────────────────────────────────
-// PROJECTS
-// ─────────────────────────────────────────
-
 model Project {
   id          String        @id @default(uuid())
   userId      String
@@ -231,9 +193,9 @@ model Project {
   milestones  Milestone[]
   files       File[]
   timeEntries TimeEntry[]
-  proposals  Proposal[]
-  contracts  Contract[]
   invoices    Invoice[]
+  proposals   Proposal[]
+  contracts   Contract[]
 
   @@map("projects")
 }
@@ -292,10 +254,6 @@ model Comment {
   @@map("comments")
 }
 
-// ─────────────────────────────────────────
-// TIME TRACKING
-// ─────────────────────────────────────────
-
 model TimeEntry {
   id          String    @id @default(uuid())
   userId      String
@@ -313,10 +271,6 @@ model TimeEntry {
 
   @@map("time_entries")
 }
-
-// ─────────────────────────────────────────
-// FILES
-// ─────────────────────────────────────────
 
 model File {
   id              String   @id @default(uuid())
@@ -338,30 +292,26 @@ model File {
   @@map("files")
 }
 
-// ─────────────────────────────────────────
-// PROPOSALS & CONTRACTS
-// ─────────────────────────────────────────
-
 model Proposal {
-  id             String         @id @default(uuid())
+  id             String    @id @default(uuid())
   userId         String
   clientId       String
   projectId      String?
-  proposalNumber String         @unique
+  proposalNumber String    @unique
   title          String
   introduction   String?
   scope          String?
   terms          String?
   lineItems      Json
-  subtotal       Decimal        @default(0)
-  total          Decimal        @default(0)
-  currency       String         @default("USD")
+  subtotal       Decimal   @default(0)
+  total          Decimal   @default(0)
+  currency       String    @default("USD")
   validUntil     DateTime?
   notes          String?
-  status         String         @default("DRAFT")
+  status         String    @default("DRAFT")
   sentAt         DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -400,10 +350,6 @@ model Contract {
 
   @@map("contracts")
 }
-
-// ─────────────────────────────────────────
-// INVOICES & PAYMENTS
-// ─────────────────────────────────────────
 
 model Invoice {
   id               String        @id @default(uuid())
@@ -465,10 +411,6 @@ model PaymentReminder {
   @@map("payment_reminders")
 }
 
-// ─────────────────────────────────────────
-// NOTIFICATIONS
-// ─────────────────────────────────────────
-
 model Notification {
   id        String   @id @default(uuid())
   userId    String
@@ -483,10 +425,6 @@ model Notification {
   @@map("notifications")
 }
 
-// ─────────────────────────────────────────
-// AI
-// ─────────────────────────────────────────
-
 model AISuggestion {
   id              String   @id @default(uuid())
   userId          String
@@ -498,4 +436,36 @@ model AISuggestion {
   createdAt       DateTime @default(now())
 
   @@map("ai_suggestions")
+}
+
+// ─────────────────────────────────────────
+// ADMIN — Landing Content
+// ─────────────────────────────────────────
+model LandingContent {
+  id        String   @id @default(cuid())
+  key       String   @unique  // hero_title, hero_subtitle, stats, etc.
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("landing_content")
+}
+
+// ─────────────────────────────────────────
+// ADMIN — Plans Config
+// ─────────────────────────────────────────
+model PlanConfig {
+  id          String   @id @default(cuid())
+  name        String   @unique  // STARTER, SOLO, PRO, AGENCY
+  displayName String
+  description String
+  price       Int      // in PHP cents (0 = free)
+  period      String   @default("month")
+  isPopular   Boolean  @default(false)
+  isVisible   Boolean  @default(true)
+  features    Json     // string[]
+  limits      Json     // { clients: number, projects: number, invoices: number }
+  sortOrder   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@map("plan_configs")
 }

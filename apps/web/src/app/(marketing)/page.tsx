@@ -1,60 +1,157 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   ArrowRight, CheckCircle2, Zap, Users, FolderKanban,
   Receipt, FileText, Clock, BarChart2, Bot, Globe,
-  Star, Shield, Sparkles, TrendingUp, Play, Sun, Moon,
+  Star, Shield, Sparkles, TrendingUp, Play, Sun, Moon, Mail,
 } from 'lucide-react';
 import { getTheme, setTheme } from '@/lib/theme';
+import api from '@/lib/api';
 
-const FEATURES = [
-  { icon: Users,        title: 'Client Management',    desc: 'Track clients, health scores, and portal access in one beautiful dashboard.' },
-  { icon: FolderKanban, title: 'Project & Kanban',      desc: 'Manage tasks with drag-and-drop boards, milestones, and progress tracking.' },
-  { icon: FileText,     title: 'Proposals & Contracts', desc: 'Create professional proposals and send contracts for digital signing.' },
-  { icon: Receipt,      title: 'Invoicing',             desc: 'Send invoices and get paid via GCash, Maya, PayPal, or credit card.' },
-  { icon: Clock,        title: 'Time Tracking',         desc: 'Log billable hours per project with a built-in live timer.' },
-  { icon: Bot,          title: 'AI Assistant',          desc: 'Generate proposals, emails, and contract clauses with AI in seconds.' },
-  { icon: BarChart2,    title: 'Analytics',             desc: 'Track revenue, top clients, on-time rates, and business performance.' },
-  { icon: Globe,        title: 'Client Portal',         desc: 'Give clients a branded portal to track progress and approve milestones.' },
+// ── Icon map ──────────────────────────────────────────────────────────────────
+const ICON_MAP: Record<string, React.ElementType> = {
+  Users, FolderKanban, FileText, Receipt, Clock, Bot,
+  BarChart2, Globe, Zap, Shield, Star, Mail, TrendingUp, Sparkles,
+};
+
+// ── Default content (used as fallback / skeleton) ────────────────────────────
+const DEFAULT_HERO = {
+  badge:    'Built for Filipino Freelancers',
+  title:    'Your work. Your clients. One place.',
+  subtitle: 'Frely is the all-in-one freelance platform — manage clients, projects, proposals, invoices, and more. Powered by AI.',
+  cta1:     'Start for free',
+  cta2:     'See how it works',
+  note:     'No credit card required · Free forever plan',
+};
+
+const DEFAULT_STATS = [
+  { stat: '10+ hrs/week', label: 'saved on admin work' },
+  { stat: '2× faster',    label: 'invoice payments' },
+  { stat: '100% free',    label: 'to get started' },
 ];
 
-const TESTIMONIALS = [
+const DEFAULT_FEATURES = [
+  { icon: 'Users',        title: 'Client Management',    desc: 'Track clients, health scores, and portal access in one beautiful dashboard.' },
+  { icon: 'FolderKanban', title: 'Project & Kanban',      desc: 'Manage tasks with drag-and-drop boards, milestones, and progress tracking.' },
+  { icon: 'FileText',     title: 'Proposals & Contracts', desc: 'Create professional proposals and send contracts for digital signing.' },
+  { icon: 'Receipt',      title: 'Invoicing',             desc: 'Send invoices and get paid via GCash, Maya, PayPal, or credit card.' },
+  { icon: 'Clock',        title: 'Time Tracking',         desc: 'Log billable hours per project with a built-in live timer.' },
+  { icon: 'Bot',          title: 'AI Assistant',          desc: 'Generate proposals, emails, and contract clauses with AI in seconds.' },
+  { icon: 'BarChart2',    title: 'Analytics',             desc: 'Track revenue, top clients, on-time rates, and business performance.' },
+  { icon: 'Globe',        title: 'Client Portal',         desc: 'Give clients a branded portal to track progress and approve milestones.' },
+];
+
+const DEFAULT_TESTIMONIALS = [
   { name: 'Maria Santos',   role: 'UI/UX Designer, Cebu',      avatar: 'MS', text: 'Frely replaced 4 different tools I was juggling. Everything in one place — my clients love it.' },
   { name: 'Carlo Reyes',    role: 'Full-stack Developer',       avatar: 'CR', text: 'The AI proposal generator saves me at least 3 hours every week. Game changer for my workflow.' },
   { name: 'Ana Villanueva', role: 'Freelance Copywriter, BGC',  avatar: 'AV', text: 'My clients are impressed by the portal. It makes me look way more professional than before.' },
 ];
 
-const PLANS = [
+const DEFAULT_CTA = {
+  title:    'Ready to level up your freelance business?',
+  subtitle: 'Join thousands of Filipino freelancers already earning more with Frely.',
+  cta1:     'Get started for free',
+  cta2:     'Sign in to your account',
+};
+
+const DEFAULT_PLANS: Plan[] = [
   {
-    name: 'Starter', price: 'Free', period: 'forever',
-    description: 'Perfect for getting started', popular: false,
+    id: 'starter', name: 'STARTER', displayName: 'Starter', description: 'Perfect for getting started',
+    price: 0, period: 'forever', isPopular: false, isVisible: true, sortOrder: 0,
     features: ['3 clients', '3 projects', '5 invoices/month', 'AI features', 'Client portal', 'Time tracking'],
-    cta: 'Get started free', href: '/register',
+    limits: { clients: 3, projects: 3, invoices: 5 },
   },
   {
-    name: 'Solo', price: '₱299', period: '/month',
-    description: 'For growing freelancers', popular: false,
+    id: 'solo', name: 'SOLO', displayName: 'Solo', description: 'For growing freelancers',
+    price: 29900, period: 'month', isPopular: false, isVisible: true, sortOrder: 1,
     features: ['15 clients', '15 projects', '30 invoices/month', 'Everything in Starter', 'Payment reminders'],
-    cta: 'Start Solo', href: '/register?plan=SOLO',
+    limits: { clients: 15, projects: 15, invoices: 30 },
   },
   {
-    name: 'Pro', price: '₱699', period: '/month',
-    description: 'For serious freelancers', popular: true,
+    id: 'pro', name: 'PRO', displayName: 'Pro', description: 'For serious freelancers',
+    price: 69900, period: 'month', isPopular: true, isVisible: true, sortOrder: 2,
     features: ['Unlimited clients', 'Unlimited projects', 'Unlimited invoices', 'White-labeling', '3 team members 🔜'],
-    cta: 'Start Pro', href: '/register?plan=PRO',
+    limits: { clients: -1, projects: -1, invoices: -1 },
   },
   {
-    name: 'Agency', price: '₱1,499', period: '/month',
-    description: 'For teams and agencies', popular: false,
+    id: 'agency', name: 'AGENCY', displayName: 'Agency', description: 'For teams and agencies',
+    price: 149900, period: 'month', isPopular: false, isVisible: true, sortOrder: 3,
     features: ['Everything in Pro', '10 team members 🔜', 'Dedicated support', 'Custom domain 🔜'],
-    cta: 'Start Agency', href: '/register?plan=AGENCY',
+    limits: { clients: -1, projects: -1, invoices: -1 },
   },
 ];
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface HeroContent     { badge: string; title: string; subtitle: string; cta1: string; cta2: string; note: string }
+interface StatItem        { stat: string; label: string }
+interface FeatureItem     { icon: string; title: string; desc: string }
+interface TestimonialItem { name: string; role: string; avatar: string; text: string }
+interface CTAContent      { title: string; subtitle: string; cta1: string; cta2: string }
+interface Plan {
+  id: string; name: string; displayName: string; description: string;
+  price: number; period: string; isPopular: boolean; isVisible: boolean; sortOrder: number;
+  features: string[]; limits: { clients: number; projects: number; invoices: number };
+}
+
+interface LandingContent {
+  hero:         HeroContent;
+  stats:        StatItem[];
+  features:     FeatureItem[];
+  testimonials: TestimonialItem[];
+  cta:          CTAContent;
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+function useLandingContent(): LandingContent {
+  const { data } = useQuery<LandingContent>({
+    queryKey: ['landing-content'],
+    queryFn:  async () => {
+      const { data } = await api.get('/api/admin/landing');
+      return data.data.content as LandingContent;
+    },
+    staleTime: 1000 * 60 * 5, // cache for 5 min
+  });
+
+  return {
+    hero:         (data?.hero         ?? DEFAULT_HERO)         as HeroContent,
+    stats:        (data?.stats        ?? DEFAULT_STATS)        as StatItem[],
+    features:     (data?.features     ?? DEFAULT_FEATURES)     as FeatureItem[],
+    testimonials: (data?.testimonials ?? DEFAULT_TESTIMONIALS) as TestimonialItem[],
+    cta:          (data?.cta          ?? DEFAULT_CTA)          as CTAContent,
+  };
+}
+
+// ── Plans hook ────────────────────────────────────────────────────────────────
+function usePlans(): Plan[] {
+  const { data } = useQuery<Plan[]>({
+    queryKey: ['landing-plans'],
+    queryFn:  async () => {
+      const { data } = await api.get('/api/admin/plans');
+      return data.data.plans as Plan[];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  // filter hidden, sort by sortOrder, fall back to defaults
+  const plans = data ?? DEFAULT_PLANS;
+  return plans.filter((p) => p.isVisible).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+// ── Price display helper ───────────────────────────────────────────────────────
+function formatPlanPrice(price: number, period: string): { display: string; period: string } {
+  if (price === 0) return { display: 'Free', period: 'forever' };
+  const php = price / 100;
+  const formatted = `₱${php % 1 === 0 ? php.toLocaleString() : php.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  return { display: formatted, period: `/${period}` };
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [dark, setDark] = useState(false);
+  const content = useLandingContent();
+  const plans   = usePlans();
 
   useEffect(() => {
     const theme = getTheme();
@@ -71,6 +168,8 @@ export default function LandingPage() {
     setTheme(next);
     setDark(!dark);
   };
+
+  const { hero, stats, features, testimonials, cta } = content;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 font-sans transition-colors duration-200">
@@ -118,35 +217,31 @@ export default function LandingPage() {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary/10 border border-primary-100 dark:border-primary/20 text-primary text-xs font-semibold rounded-full mb-6">
             <Sparkles className="h-3.5 w-3.5" />
-            Built for Filipino Freelancers
+            {hero.badge}
           </div>
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-gray-900 dark:text-white leading-[1.08] tracking-tight mb-6">
-            Your work.{' '}
-            <br className="hidden sm:block" />
-            Your clients.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-500">
-              One place.
+              {hero.title}
             </span>
           </h1>
           <p className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Frely is the all-in-one freelance platform — manage clients, projects,
-            proposals, invoices, and more. Powered by AI.
+            {hero.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Link
               href="/register"
               className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-600 transition-all text-base shadow-xl shadow-primary/30 hover:-translate-y-0.5"
             >
-              Start for free <ArrowRight className="h-4 w-4" />
+              {hero.cta1} <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#features"
               className="flex items-center gap-2 px-8 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors text-base"
             >
-              <Play className="h-4 w-4 text-primary fill-primary" /> See how it works
+              <Play className="h-4 w-4 text-primary fill-primary" /> {hero.cta2}
             </a>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500">No credit card required · Free forever plan</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{hero.note}</p>
         </div>
 
         {/* App mockup */}
@@ -220,11 +315,7 @@ export default function LandingPage() {
       {/* ── STATS ───────────────────────────── */}
       <section className="py-14 border-y border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
-          {[
-            { stat: '10+ hrs/week', label: 'saved on admin work' },
-            { stat: '2× faster',    label: 'invoice payments' },
-            { stat: '100% free',    label: 'to get started' },
-          ].map(({ stat, label }) => (
+          {stats.map(({ stat, label }) => (
             <div key={stat}>
               <p className="text-3xl font-extrabold text-gray-900 dark:text-white">{stat}</p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{label}</p>
@@ -244,15 +335,18 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="group p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-primary-200 dark:hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-200">
-                <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary-100 dark:group-hover:bg-primary/20 transition-colors">
-                  <Icon className="h-5 w-5 text-primary" />
+            {features.map(({ icon, title, desc }) => {
+              const Icon = ICON_MAP[icon] ?? Zap;
+              return (
+                <div key={title} className="group p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-primary-200 dark:hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-200">
+                  <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary-100 dark:group-hover:bg-primary/20 transition-colors">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
                 </div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -266,7 +360,7 @@ export default function LandingPage() {
             <p className="text-gray-500 dark:text-gray-400">Join thousands of Filipino freelancers already using Frely.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map(({ name, role, avatar, text }) => (
+            {testimonials.map(({ name, role, avatar, text }) => (
               <div key={name} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -297,62 +391,65 @@ export default function LandingPage() {
             <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">Simple, transparent pricing</h2>
             <p className="text-lg text-gray-500 dark:text-gray-400">Start free. Upgrade when you need more power.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {PLANS.map((plan) => (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 ${plans.length === 4 ? 'lg:grid-cols-4' : plans.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
+            {plans.map((plan) => {
+              const { display: priceDisplay, period: periodDisplay } = formatPlanPrice(plan.price, plan.period);
+              return (
               <div
-                key={plan.name}
+                key={plan.id}
                 className={`relative rounded-2xl flex flex-col transition-all ${
-                  plan.popular
+                  plan.isPopular
                     ? 'bg-primary border-2 border-primary shadow-2xl shadow-primary/25 scale-105'
                     : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                {plan.popular && (
+                {plan.isPopular && (
                   <div className="absolute -top-4 inset-x-0 flex justify-center">
                     <span className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-primary text-xs font-bold rounded-full shadow-lg border border-primary-100">
                       <Zap className="h-3 w-3 fill-primary" /> Most Popular
                     </span>
                   </div>
                 )}
-                <div className={`p-6 pb-4 ${plan.popular ? 'mt-4' : ''}`}>
-                  <h3 className={`text-base font-bold mb-0.5 ${plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                    {plan.name}
+                <div className={`p-6 pb-4 ${plan.isPopular ? 'mt-4' : ''}`}>
+                  <h3 className={`text-base font-bold mb-0.5 ${plan.isPopular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                    {plan.displayName}
                   </h3>
-                  <p className={`text-xs mb-4 ${plan.popular ? 'text-primary-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                  <p className={`text-xs mb-4 ${plan.isPopular ? 'text-primary-200' : 'text-gray-400 dark:text-gray-500'}`}>
                     {plan.description}
                   </p>
                   <div className="flex items-baseline gap-1 mb-5">
-                    <span className={`text-4xl font-extrabold ${plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                      {plan.price}
+                    <span className={`text-4xl font-extrabold ${plan.isPopular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                      {priceDisplay}
                     </span>
-                    <span className={`text-sm ${plan.popular ? 'text-primary-200' : 'text-gray-400'}`}>
-                      {plan.period}
+                    <span className={`text-sm ${plan.isPopular ? 'text-primary-200' : 'text-gray-400'}`}>
+                      {periodDisplay}
                     </span>
                   </div>
-                  <div className={`h-px mb-5 ${plan.popular ? 'bg-primary-400' : 'bg-gray-100 dark:bg-gray-800'}`} />
+                  <div className={`h-px mb-5 ${plan.isPopular ? 'bg-primary-400' : 'bg-gray-100 dark:bg-gray-800'}`} />
                   <ul className="space-y-2.5 mb-6 flex-1">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5">
-                        <CheckCircle2 className={`h-4 w-4 shrink-0 mt-0.5 ${plan.popular ? 'text-primary-200' : 'text-green-500'}`} />
-                        <span className={`text-sm ${plan.popular ? 'text-primary-50' : 'text-gray-600 dark:text-gray-300'}`}>{f}</span>
+                        <CheckCircle2 className={`h-4 w-4 shrink-0 mt-0.5 ${plan.isPopular ? 'text-primary-200' : 'text-green-500'}`} />
+                        <span className={`text-sm ${plan.isPopular ? 'text-primary-50' : 'text-gray-600 dark:text-gray-300'}`}>{f}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="px-6 pb-6 mt-auto">
                   <Link
-                    href={plan.href}
+                    href={plan.price === 0 ? '/register' : `/register?plan=${plan.name}`}
                     className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
-                      plan.popular
+                      plan.isPopular
                         ? 'bg-white text-primary hover:bg-primary-50 shadow-lg'
                         : 'bg-gray-900 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600'
                     }`}
                   >
-                    {plan.cta} <ArrowRight className="h-3.5 w-3.5" />
+                    {plan.price === 0 ? 'Get started free' : `Start ${plan.displayName}`} <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           <p className="text-center text-sm text-gray-400 dark:text-gray-500 mt-8">
             All plans include a 14-day free trial of paid features. No credit card required.
@@ -384,23 +481,23 @@ export default function LandingPage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-extrabold text-white mb-4 leading-tight">
-            Ready to level up your freelance business?
+            {cta.title}
           </h2>
           <p className="text-primary-100 mb-10 text-lg max-w-xl mx-auto">
-            Join thousands of Filipino freelancers already earning more with Frely.
+            {cta.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
               className="flex items-center gap-2 px-8 py-3.5 bg-white text-primary font-bold rounded-xl hover:bg-primary-50 transition-colors text-base shadow-xl"
             >
-              Get started for free <ArrowRight className="h-4 w-4" />
+              {cta.cta1} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
               className="flex items-center gap-2 px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors text-base border border-white/20"
             >
-              Sign in to your account
+              {cta.cta2}
             </Link>
           </div>
         </div>
