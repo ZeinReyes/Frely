@@ -1,8 +1,8 @@
 import api from '@/lib/api';
-import type { VyrnFile, UpdateFileInput } from '@/types/file';
+import type { FrelyFile, UpdateFileInput } from '@/types/file';
 
 export const filesApi = {
-  list: async (params: { projectId?: string; clientId?: string }): Promise<{ files: VyrnFile[] }> => {
+  list: async (params: { projectId?: string; clientId?: string }): Promise<{ files: FrelyFile[] }> => {
     const { data } = await api.get('/api/files', { params });
     return data.data;
   },
@@ -10,7 +10,7 @@ export const filesApi = {
   upload: async (
     file: File,
     options: { projectId?: string; clientId?: string; isClientVisible?: boolean }
-  ): Promise<{ file: VyrnFile }> => {
+  ): Promise<{ file: FrelyFile }> => {
     const formData = new FormData();
     formData.append('file', file);
     if (options.projectId)      formData.append('projectId', options.projectId);
@@ -25,7 +25,7 @@ export const filesApi = {
     return data.data;
   },
 
-  update: async (id: string, input: UpdateFileInput): Promise<{ file: VyrnFile }> => {
+  update: async (id: string, input: UpdateFileInput): Promise<{ file: FrelyFile }> => {
     const { data } = await api.put(`/api/files/${id}`, input);
     return data.data;
   },

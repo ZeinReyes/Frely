@@ -9,7 +9,7 @@ import { useFiles, useUploadFile, useUpdateFile, useDeleteFile } from '@/hooks/u
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import type { VyrnFile } from '@/types/file';
+import type { FrelyFile } from '@/types/file';
 
 // ─────────────────────────────────────────
 // HELPERS
@@ -35,7 +35,7 @@ function isImage(mimeType: string) {
 // ─────────────────────────────────────────
 // IMAGE PREVIEW MODAL
 // ─────────────────────────────────────────
-function ImagePreviewModal({ file, onClose }: { file: VyrnFile; onClose: () => void }) {
+function ImagePreviewModal({ file, onClose }: { file: FrelyFile; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={onClose}>
       <div className="relative max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
@@ -68,8 +68,8 @@ export function FileBrowser({ projectId, clientId }: FileBrowserProps) {
   const params      = { projectId, clientId };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging,      setDragging]      = useState(false);
-  const [previewFile,   setPreviewFile]   = useState<VyrnFile | null>(null);
-  const [deleteFile,    setDeleteFile]    = useState<VyrnFile | null>(null);
+  const [previewFile,   setPreviewFile]   = useState<FrelyFile | null>(null);
+  const [deleteFile,    setDeleteFile]    = useState<FrelyFile | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
 
   const { data, isLoading }  = useFiles(params);
@@ -77,7 +77,7 @@ export function FileBrowser({ projectId, clientId }: FileBrowserProps) {
   const updateFile            = useUpdateFile(params);
   const deleteFileMutation    = useDeleteFile(params);
 
-  const files: VyrnFile[] = data?.files || [];
+  const files: FrelyFile[] = data?.files || [];
 
   const handleFiles = async (fileList: FileList) => {
     setUploadProgress(true);
@@ -99,7 +99,7 @@ export function FileBrowser({ projectId, clientId }: FileBrowserProps) {
     setDeleteFile(null);
   };
 
-  const toggleVisibility = async (file: VyrnFile) => {
+  const toggleVisibility = async (file: FrelyFile) => {
     await updateFile.mutateAsync({
       id:    file.id,
       input: { isClientVisible: !file.isClientVisible },

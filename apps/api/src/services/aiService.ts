@@ -36,7 +36,7 @@ export async function complete(
       'Authorization':    `Bearer ${OPENROUTER_API_KEY}`,
       'Content-Type':     'application/json',
       'HTTP-Referer':     APP_URL,
-      'X-Title':          'Vyrn',
+      'X-Title':          'Frely',
     },
     body: JSON.stringify({
       model:       options?.model       || DEFAULT_MODEL,

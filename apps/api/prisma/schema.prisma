@@ -20,7 +20,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  // Vyrn-specific fields
+  // Frely-specific fields
   fullName         String    @default("")
   timezone         String    @default("UTC")
   plan             Plan      @default(STARTER)

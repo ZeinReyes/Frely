@@ -3,7 +3,7 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: { default: 'Vyrn', template: '%s | Vyrn' },
+  title: { default: 'Frely', template: '%s | Frely' },
   description: 'Your work. Your clients. One place.',
   icons: { icon: '/favicon.ico' },
 };

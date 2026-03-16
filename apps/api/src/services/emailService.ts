@@ -8,8 +8,8 @@
 import logger from '../config/logger';
 
 const BREVO_API_KEY  = process.env.BREVO_API_KEY || '';
-const FROM_NAME      = process.env.BREVO_FROM_NAME  || 'Vyrn';
-const FROM_EMAIL     = process.env.BREVO_FROM_EMAIL || 'noreply@vyrn.app';
+const FROM_NAME      = process.env.BREVO_FROM_NAME  || 'Frely';
+const FROM_EMAIL     = process.env.BREVO_FROM_EMAIL || 'noreply@Frely.app';
 const BREVO_API_URL  = 'https://api.brevo.com/v3/smtp/email';
 
 interface SendEmailOptions {
@@ -67,7 +67,7 @@ export async function sendInvoiceEmail(
     subject: `Invoice ${invoiceNumber}`,
     html: `
       <div style="font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:40px 0;">
-        <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Vyrn</div>
+        <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Frely</div>
         <h2 style="color:#111827;margin-bottom:8px">Invoice ${invoiceNumber}</h2>
         <p style="color:#6b7280;">Hi ${clientName}, you have a new invoice waiting for payment.</p>
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:20px 0;">
@@ -102,7 +102,7 @@ export async function sendPaymentReminderEmail(
     subject: subjects[urgency],
     html: `
       <div style="font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:40px 0;">
-        <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Vyrn</div>
+        <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Frely</div>
         <h2 style="color:#111827;">Payment Reminder</h2>
         <p style="color:#6b7280;">Hi ${clientName},</p>
         <p style="color:#374151;">

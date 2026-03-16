@@ -1,4 +1,4 @@
-export interface VyrnFile {
+export interface FrelyFile {
   id:              string;
   projectId?:      string;
   clientId?:       string;

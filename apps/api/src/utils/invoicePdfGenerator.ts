@@ -80,7 +80,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
 <body>
   <div class="header">
     <div>
-      <div class="brand">Vyrn</div>
+      <div class="brand">${data.freelancerName}</div>
       <div class="doc-type">Invoice</div>
     </div>
     <div class="meta">

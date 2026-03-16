@@ -55,6 +55,7 @@ function formatDate(dateStr: string): string {
 }
 
 function generateProposalHTML(data: ProposalPDFData): string {
+  const color = data.brandColor || '#6C63FF';
   const lineItemsHTML = data.lineItems.map(item => `
     <tr>
       <td style="padding: 10px 12px; border-bottom: 1px solid #f3f4f6;">${item.description}</td>
@@ -71,8 +72,8 @@ function generateProposalHTML(data: ProposalPDFData): string {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: white; padding: 48px; font-size: 14px; line-height: 1.6; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid #6C63FF; }
-    .brand { font-size: 22px; font-weight: 800; color: #6C63FF; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid ${color}; }
+    .brand { font-size: 22px; font-weight: 800; color: ${color}; }
     .doc-type { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-top: 2px; }
     .meta { text-align: right; }
     .meta .number { font-size: 18px; font-weight: 700; color: #111827; }
@@ -91,7 +92,7 @@ function generateProposalHTML(data: ProposalPDFData): string {
     thead th:last-child { text-align: right; }
     .totals { margin-left: auto; width: 240px; }
     .total-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-    .total-row.final { border-top: 2px solid #6C63FF; border-bottom: none; padding-top: 10px; font-weight: 700; font-size: 15px; color: #6C63FF; }
+    .total-row.final { border-top: 2px solid ${color}; border-bottom: none; padding-top: 10px; font-weight: 700; font-size: 15px; color: #6C63FF; }
     .valid-until { margin-top: 24px; padding: 12px 16px; background: #f0fdf4; border-radius: 8px; font-size: 13px; color: #166534; }
     .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
   </style>
@@ -99,7 +100,7 @@ function generateProposalHTML(data: ProposalPDFData): string {
 <body>
   <div class="header">
     <div>
-      <div class="brand">Vyrn</div>
+      <div class="brand">${data.freelancerName}</div>
       <div class="doc-type">Proposal</div>
     </div>
     <div class="meta">
@@ -189,8 +190,8 @@ function generateContractHTML(data: ContractPDFData): string {
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: white; padding: 48px; font-size: 14px; line-height: 1.8; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid #6C63FF; }
-    .brand { font-size: 22px; font-weight: 800; color: #6C63FF; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid ${color}; }
+    .brand { font-size: 22px; font-weight: 800; color: ${color}; }
     .doc-type { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-top: 2px; }
     .meta { text-align: right; }
     .meta .number { font-size: 18px; font-weight: 700; }
@@ -211,7 +212,7 @@ function generateContractHTML(data: ContractPDFData): string {
 <body>
   <div class="header">
     <div>
-      <div class="brand">Vyrn</div>
+      <div class="brand">${data.freelancerName}</div>
       <div class="doc-type">Contract</div>
     </div>
     <div class="meta">

@@ -1,8 +1,8 @@
-# Vyrn
+# Frely
  
 **Your work. Your clients. One place.**
  
-Vyrn is a full-stack SaaS platform built for freelancers to manage their entire business in one place — client onboarding, project tracking, kanban boards, contracts, invoices, payments, file sharing, and a branded client portal.
+Frely is a full-stack SaaS platform built for freelancers to manage their entire business in one place — client onboarding, project tracking, kanban boards, contracts, invoices, payments, file sharing, and a branded client portal.
  
 ---
  
@@ -47,7 +47,7 @@ Vyrn is a full-stack SaaS platform built for freelancers to manage their entire 
 ## Project Structure
  
 ```
-vyrn/
+Frely/
 ├── apps/
 │   ├── web/          # Next.js 14 frontend
 │   └── api/          # Node.js / Express backend
@@ -68,8 +68,8 @@ vyrn/
  
 ```bash
 # Clone the repo
-git clone https://github.com/ZeinReyes/Vyrn.git
-cd vyrn
+git clone https://github.com/ZeinReyes/Frely.git
+cd Frely
  
 # Install dependencies
 npm install

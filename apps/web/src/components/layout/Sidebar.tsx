@@ -30,7 +30,7 @@ export function Sidebar() {
     <aside className="w-56 shrink-0 bg-white border-r border-gray-200 flex flex-col h-full">
       {/* Logo */}
       <div className="h-16 flex items-center px-5 border-b border-gray-200">
-        <span className="text-xl font-bold text-primary tracking-tight">Vyrn</span>
+        <span className="text-xl font-bold text-primary tracking-tight">Frely</span>
       </div>
 
       {/* Navigation */}

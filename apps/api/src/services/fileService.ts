@@ -79,8 +79,8 @@ export async function uploadFile(
 
   // Upload to Cloudinary
   const folder = projectId
-    ? `vyrn/${userId}/projects/${projectId}`
-    : `vyrn/${userId}/clients/${clientId}`;
+    ? `Frely/${userId}/projects/${projectId}`
+    : `Frely/${userId}/clients/${clientId}`;
 
   const result = await cloudinary.uploader.upload(file.tempFilePath || file.data.toString('base64'), {
     folder,

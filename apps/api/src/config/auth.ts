@@ -8,7 +8,7 @@ const sendBrevoEmail = async (to: string, subject: string, htmlContent: string) 
     'https://api.brevo.com/v3/smtp/email',
     {
       sender: {
-        name: process.env.BREVO_FROM_NAME || 'Vyrn',
+        name: process.env.BREVO_FROM_NAME || 'Frely',
         email: process.env.BREVO_FROM_EMAIL,
       },
       to: [{ email: to }],
@@ -41,7 +41,7 @@ export const auth = betterAuth({
 
     // Send password reset email via Brevo
     sendResetPassword: async ({ user, url }: { user: { name: string; email: string }; url: string }) => {
-      void sendBrevoEmail(user.email, 'Reset your Vyrn password', buildPasswordResetEmail(user.name, url));
+      void sendBrevoEmail(user.email, 'Reset your Frely password', buildPasswordResetEmail(user.name, url));
     },
   },
 
@@ -52,7 +52,7 @@ export const auth = betterAuth({
     redirectTo: 'http://localhost:3000/dashboard',
     sendVerificationEmail: async ({ user, url }: { user: { name: string; email: string }; url: string }) => {
       console.log('📧 Sending verification email to:', user.email);
-      void sendBrevoEmail(user.email, 'Verify your Vyrn account', buildVerificationEmail(user.name, url));
+      void sendBrevoEmail(user.email, 'Verify your Frely account', buildVerificationEmail(user.name, url));
       console.log('✅ Email dispatched!');
     },
   },
@@ -107,7 +107,7 @@ function buildVerificationEmail(name: string, url: string): string {
             Verify Email Address
           </a>
           <p style="color: #9CA3AF; margin: 24px 0 0; font-size: 13px;">
-            This link expires in 24 hours. If you didn't create a Vyrn account, you can safely ignore this email.
+            This link expires in 24 hours. If you didn't create a Frely account, you can safely ignore this email.
           </p>
         </div>
       </div>

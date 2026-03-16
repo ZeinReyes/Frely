@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Client Portal — Vyrn',
+  title: 'Client Portal — Frely',
 };
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {

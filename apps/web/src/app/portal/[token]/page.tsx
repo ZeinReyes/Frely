@@ -56,7 +56,7 @@ export default function PortalPage() {
       {/* Welcome header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome{client.name ? `, ${client.name.split(' ')[0]}` : ''}! 👋
+          Welcome{client.name ? `, ${client.name.split(' ')[0]}` : ''}!
         </h1>
         {client.company && (
           <p className="text-gray-500 mt-1 flex items-center gap-1.5">

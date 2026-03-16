@@ -147,7 +147,12 @@ export async function getProposalPDF(userId: string, proposalId: string): Promis
   });
   if (!proposal) throw AppError.notFound('Proposal not found');
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.branding.findUnique({ where: { userId } }),
+  ]);
+
+  const freelancerName = branding?.companyName || user?.name || 'Freelancer';
 
   const pdf = await generatePDF({
     type:            'proposal',
@@ -156,7 +161,7 @@ export async function getProposalPDF(userId: string, proposalId: string): Promis
     clientName:      proposal.client.name,
     clientEmail:     proposal.client.email,
     clientCompany:   proposal.client.company || undefined,
-    freelancerName:  user?.name || 'Freelancer',
+    freelancerName,
     introduction:    proposal.introduction || undefined,
     scope:           proposal.scope || undefined,
     lineItems:       proposal.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[],

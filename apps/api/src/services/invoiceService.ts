@@ -198,10 +198,10 @@ export async function sendInvoiceViaPayPal(userId: string, invoiceId: string) {
   if (!invoice) throw AppError.notFound('Invoice not found');
   if (invoice.status !== 'DRAFT') throw AppError.badRequest('Invoice already sent');
 
-  const user = await prisma.user.findUnique({
-    where:  { id: userId },
-    select: { name: true, email: true },
-  });
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.branding.findUnique({ where: { userId } }),
+  ]);
 
   const lineItems = invoice.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[];
 
@@ -219,7 +219,7 @@ export async function sendInvoiceViaPayPal(userId: string, invoiceId: string) {
     discount:        Number(invoice.discount),
     dueDate:         invoice.dueDate?.toISOString(),
     notes:           invoice.notes || undefined,
-    freelancerName:  user?.name  || 'Freelancer',
+    freelancerName:  branding?.companyName || user?.name  || 'Freelancer',
     freelancerEmail: user?.email || '',
   });
 
@@ -289,10 +289,13 @@ export async function getInvoicePDF(userId: string, invoiceId: string): Promise<
   });
   if (!invoice) throw AppError.notFound('Invoice not found');
 
-  const user = await prisma.user.findUnique({
-    where:  { id: userId },
-    select: { name: true, email: true },
-  });
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.branding.findUnique({ where: { userId } }),
+  ]);
+
+  const freelancerName  = branding?.companyName || user?.name  || 'Freelancer';
+  const freelancerEmail = user?.email || '';
 
   const lineItems = invoice.lineItems as {
     description: string; quantity: number; unitPrice: number; amount: number;
@@ -304,8 +307,8 @@ export async function getInvoicePDF(userId: string, invoiceId: string): Promise<
     clientName:      invoice.client.name,
     clientEmail:     invoice.client.email,
     clientCompany:   invoice.client.company || undefined,
-    freelancerName:  user?.name  || 'Freelancer',
-    freelancerEmail: user?.email || '',
+    freelancerName,
+    freelancerEmail,
     lineItems,
     subtotal:        Number(invoice.subtotal),
     taxRate:         Number(invoice.taxRate),

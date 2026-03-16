@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => set({ user: null, isLoading: false }),
     }),
     {
-      name: 'vyrn-auth',
+      name: 'Frely-auth',
       partialize: (state) => ({ user: state.user }),
     }
   )

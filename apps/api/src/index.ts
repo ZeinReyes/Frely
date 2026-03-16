@@ -23,7 +23,7 @@ async function bootstrap() {
     const server = http.createServer(app);
 
     server.listen(PORT, () => {
-      logger.info(`✅ Vyrn API running → http://localhost:${PORT}`);
+      logger.info(`✅ Frely API running → http://localhost:${PORT}`);
       logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 

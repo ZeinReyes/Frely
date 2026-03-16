@@ -180,7 +180,12 @@ export async function getContractPDF(userId: string, contractId: string): Promis
   });
   if (!contract) throw AppError.notFound('Contract not found');
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.branding.findUnique({ where: { userId } }),
+  ]);
+
+  const freelancerName = branding?.companyName || user?.name || 'Freelancer';
 
   const pdf = await generatePDF({
     type:           'contract',
@@ -189,7 +194,8 @@ export async function getContractPDF(userId: string, contractId: string): Promis
     clientName:     contract.client.name,
     clientEmail:    contract.client.email,
     clientCompany:  contract.client.company || undefined,
-    freelancerName: user?.name || 'Freelancer',
+    freelancerName,
+    brandColor:     branding?.primaryColor || undefined,
     body:           contract.body,
     value:          contract.value ? Number(contract.value) : undefined,
     currency:       contract.currency,

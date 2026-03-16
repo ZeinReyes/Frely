@@ -62,7 +62,7 @@ async function sendReminderEmail(
 
   const html = `
     <div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px;color:#111827">
-      <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Vyrn</div>
+      <div style="font-size:20px;font-weight:800;color:#6C63FF;margin-bottom:24px">Frely</div>
       <h2 style="font-size:18px;font-weight:700;margin-bottom:8px">${subject}</h2>
       <p style="color:#6b7280;margin-bottom:24px">Hi ${invoice.client.name},</p>
       <p style="color:#374151;margin-bottom:16px">

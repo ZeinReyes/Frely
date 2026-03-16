@@ -30,6 +30,7 @@ import reminderRoutes     from './routes/reminders';
 import notificationRoutes from './routes/notifications';
 import aiRoutes           from './routes/ai';
 import analyticsRoutes    from './routes/analytics';
+import settingsRoutes     from './routes/settings';
 
 const app = express();
 
@@ -140,6 +141,9 @@ app.use('/api/ai', authenticate, aiRoutes);
 
 // Analytics
 app.use('/api/analytics', authenticate, analyticsRoutes);
+
+// Settings
+app.use('/api/settings', authenticate, settingsRoutes);
 
 // ─────────────────────────────────────────
 // Error Handling (must be last)

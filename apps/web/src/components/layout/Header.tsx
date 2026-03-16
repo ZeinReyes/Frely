@@ -22,7 +22,7 @@ export function Header() {
 
   const title = Object.entries(PAGE_TITLES).find(([key]) =>
     pathname === key || pathname.startsWith(key + '/')
-  )?.[1] || 'Vyrn';
+  )?.[1] || 'Frely';
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">

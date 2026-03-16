@@ -46,7 +46,7 @@ export default function VerifyEmailPage() {
           Your account is now active. You can sign in.
         </p>
         <Button className="w-full" onClick={() => router.push('/login')}>
-          Sign in to Vyrn
+          Sign in to Frely
         </Button>
       </div>
     );

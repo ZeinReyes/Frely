@@ -56,7 +56,7 @@ export default function LoginPage() {
     <div className="auth-card animate-fade-in">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-        <p className="mt-1 text-sm text-gray-500">Sign in to your Vyrn account</p>
+        <p className="mt-1 text-sm text-gray-500">Sign in to your Frely account</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
