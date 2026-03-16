@@ -12,6 +12,7 @@ import { ProjectStatusBadge } from '@/components/ui/ProjectStatusBadge';
 import { ProjectFormModal } from '@/components/ui/ProjectFormModal';
 import { TaskFormModal } from '@/components/ui/TaskFormModal';
 import { MilestoneTracker } from '@/components/ui/MilestoneTracker';
+import { AIProjectSummary } from '@/components/ui/AIProjectSummary';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { FileBrowser } from '@/components/ui/FileBrowser';
 import { Button } from '@/components/ui/button';
@@ -129,6 +130,11 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+
+      {/* AI Summary */}
+      <div className="mb-6">
+        <AIProjectSummary projectId={project.id} />
+      </div>
 
       {/* Milestones */}
       <div className="card p-5 mb-6">

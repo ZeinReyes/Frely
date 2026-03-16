@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useInvoices';
 import { ReminderPanel } from '@/components/ui/ReminderPanel';
 import { InvoiceStatusBadge } from '@/components/ui/InvoiceStatusBadge';
+import { AIEmailModal } from '@/components/ui/AIEmailModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatCurrency } from '@/lib/utils';
@@ -21,6 +22,7 @@ export default function InvoiceDetailPage() {
   const { id }    = useParams<{ id: string }>();
   const router    = useRouter();
   const [showDelete,  setShowDelete]  = useState(false);
+  const [showAIEmail, setShowAIEmail] = useState(false);
   const [showPaid,    setShowPaid]    = useState(false);
   const [copiedLink,  setCopiedLink]  = useState(false);
 
@@ -271,6 +273,12 @@ export default function InvoiceDetailPage() {
           <div className="card p-5 space-y-2">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Actions</h3>
             <button
+              onClick={() => setShowAIEmail(true)}
+              className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-primary hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              ✨ Write follow-up email
+            </button>
+            <button
               onClick={() => window.open(invoicesApi.getPDFUrl(id), '_blank')}
               className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
             >
@@ -319,6 +327,14 @@ export default function InvoiceDetailPage() {
           loading={deleteInvoice.isPending}
           onConfirm={handleDelete}
           onClose={() => setShowDelete(false)}
+        />
+      )}
+      {showAIEmail && invoice && (
+        <AIEmailModal
+          clientName={invoice.client.name}
+          invoiceNumber={invoice.invoiceNumber}
+          amount={new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency }).format(Number(invoice.total))}
+          onClose={() => setShowAIEmail(false)}
         />
       )}
       {showPaid && (
