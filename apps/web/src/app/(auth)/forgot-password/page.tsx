@@ -49,15 +49,19 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <div className="auth-card animate-fade-in text-center">
-        <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-primary-50 dark:bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Mail className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-        <p className="text-gray-500 text-sm mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Check your email
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
           We sent a password reset link to
         </p>
-        <p className="text-gray-900 font-medium text-sm mb-6">{getValues('email')}</p>
-        <p className="text-xs text-gray-400 mb-6">
+        <p className="text-gray-900 dark:text-white font-medium text-sm mb-6">
+          {getValues('email')}
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
           Didn&apos;t receive it? Check your spam folder or try again.
         </p>
         <Link href="/login">
@@ -70,8 +74,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="auth-card animate-fade-in">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Forgot password?</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Forgot password?</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
@@ -92,7 +96,7 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
         Remember your password?{' '}
         <Link href="/login" className="text-primary hover:text-primary-600 font-medium">
           Sign in

@@ -5,23 +5,40 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, FolderKanban, Clock,
-  FileText, ScrollText, Receipt, Bell, Settings, LogOut, BarChart2, Zap, ChevronUp,
+  FileText, ScrollText, Receipt, Bell, Settings, LogOut, BarChart2, Zap, ChevronUp, Crown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { TimerWidget } from '@/components/ui/TimerWidget';
 
 const NAV = [
-  { href: '/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/clients',       label: 'Clients',      icon: Users },
-  { href: '/projects',      label: 'Projects',     icon: FolderKanban },
-  { href: '/time-tracker',  label: 'Time',         icon: Clock },
-  { href: '/proposals',     label: 'Proposals',    icon: FileText },
-  { href: '/contracts',     label: 'Contracts',    icon: ScrollText },
-  { href: '/invoices',      label: 'Invoices',     icon: Receipt },
-  { href: '/analytics',     label: 'Analytics',    icon: BarChart2 },
-  { href: '/notifications', label: 'Notifications',icon: Bell },
+  { href: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
+  { href: '/clients',       label: 'Clients',       icon: Users },
+  { href: '/projects',      label: 'Projects',      icon: FolderKanban },
+  { href: '/time-tracker',  label: 'Time',          icon: Clock },
+  { href: '/proposals',     label: 'Proposals',     icon: FileText },
+  { href: '/contracts',     label: 'Contracts',     icon: ScrollText },
+  { href: '/invoices',      label: 'Invoices',      icon: Receipt },
+  { href: '/analytics',     label: 'Analytics',     icon: BarChart2 },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
 ];
+
+// Plan hierarchy — used to determine if upgrade is available
+const PLAN_ORDER = ['STARTER', 'SOLO', 'PRO', 'AGENCY'];
+
+const PLAN_LABELS: Record<string, string> = {
+  STARTER: 'Starter',
+  SOLO:    'Solo',
+  PRO:     'Pro',
+  AGENCY:  'Agency',
+};
+
+const PLAN_COLORS: Record<string, string> = {
+  STARTER: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+  SOLO:    'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+  PRO:     'bg-primary-50 dark:bg-primary/10 text-primary',
+  AGENCY:  'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+};
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -38,6 +55,13 @@ export function Sidebar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const userPlan    = user?.plan ?? 'STARTER';
+  const planIndex   = PLAN_ORDER.indexOf(userPlan);
+  const isTopPlan   = planIndex === PLAN_ORDER.length - 1;
+  const nextPlan    = !isTopPlan ? PLAN_ORDER[planIndex + 1] : null;
+  const planLabel   = PLAN_LABELS[userPlan] ?? userPlan;
+  const planColor   = PLAN_COLORS[userPlan] ?? PLAN_COLORS.STARTER;
 
   return (
     <aside className="w-56 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-full">
@@ -85,18 +109,30 @@ export function Sidebar() {
         >
           <div className="p-2 space-y-0.5">
 
-            {/* Upgrade Plan */}
-            <Link
-              href="/upgrade"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-700"
-            >
-              <Zap className="h-4 w-4 shrink-0 text-amber-400" />
-              Upgrade Plan
-              <span className="ml-auto text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded">
-                Pro
-              </span>
-            </Link>
+            {/* Upgrade or Top Plan badge */}
+            {isTopPlan ? (
+              // Already on highest plan — show a non-clickable badge
+              <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10">
+                <Crown className="h-4 w-4 shrink-0 text-amber-400" />
+                <span>Agency Plan</span>
+                <span className="ml-auto text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                  Max
+                </span>
+              </div>
+            ) : (
+              // Show upgrade to next plan
+              <Link
+                href="/upgrade"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-700"
+              >
+                <Zap className="h-4 w-4 shrink-0 text-amber-400" />
+                Upgrade to {PLAN_LABELS[nextPlan!]}
+                <span className="ml-auto text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded">
+                  {PLAN_LABELS[nextPlan!]}
+                </span>
+              </Link>
+            )}
 
             {/* Settings */}
             <Link
@@ -137,7 +173,10 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{user?.fullName}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user?.plan ?? 'Starter'}</p>
+            {/* Dynamic plan badge */}
+            <span className={cn('inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded mt-0.5', planColor)}>
+              {planLabel}
+            </span>
           </div>
           <ChevronUp
             className={cn(

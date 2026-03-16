@@ -11,7 +11,6 @@ import { signIn } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/useToast';
-import type { Metadata } from 'next';
 
 const schema = z.object({
   email:    z.string().email('Enter a valid email'),
@@ -55,8 +54,8 @@ export default function LoginPage() {
   return (
     <div className="auth-card animate-fade-in">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-        <p className="mt-1 text-sm text-gray-500">Sign in to your Frely account</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Sign in to your Frely account</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -70,7 +69,7 @@ export default function LoginPage() {
         />
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Password <span className="text-danger">*</span>
           </label>
           <div className="relative">
@@ -84,7 +83,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -108,7 +107,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
         Don&apos;t have an account?{' '}
         <Link href="/register" className="text-primary hover:text-primary-600 font-medium">
           Create one free

@@ -32,8 +32,9 @@ export default function ResetPasswordPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const { toast }    = useToast();
-  const [showPw, setShowPw] = useState(false);
-  const [done, setDone]     = useState(false);
+  const [showPw, setShowPw]         = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [done, setDone]             = useState(false);
 
   const token = searchParams.get('token') || '';
 
@@ -70,11 +71,15 @@ export default function ResetPasswordPage() {
   if (done) {
     return (
       <div className="auth-card animate-fade-in text-center">
-        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-secondary" />
+        <div className="w-16 h-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Password reset!</h2>
-        <p className="text-gray-500 text-sm">Redirecting you to sign in...</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Password reset!
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          Redirecting you to sign in...
+        </p>
       </div>
     );
   }
@@ -82,13 +87,16 @@ export default function ResetPasswordPage() {
   return (
     <div className="auth-card animate-fade-in">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Set new password</h2>
-        <p className="mt-1 text-sm text-gray-500">Choose a strong password for your account.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Set new password</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Choose a strong password for your account.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* New password */}
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             New password <span className="text-danger">*</span>
           </label>
           <div className="relative">
@@ -102,7 +110,7 @@ export default function ResetPasswordPage() {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -112,17 +120,27 @@ export default function ResetPasswordPage() {
           )}
         </div>
 
+        {/* Confirm password */}
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Confirm password <span className="text-danger">*</span>
           </label>
-          <input
-            type="password"
-            autoComplete="new-password"
-            placeholder="••••••••"
-            className={`input ${errors.confirm ? 'border-danger focus:ring-danger' : ''}`}
-            {...register('confirm')}
-          />
+          <div className="relative">
+            <input
+              type={showConfirm ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="••••••••"
+              className={`input pr-10 ${errors.confirm ? 'border-danger focus:ring-danger' : ''}`}
+              {...register('confirm')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.confirm && (
             <p className="text-xs text-danger">{errors.confirm.message}</p>
           )}

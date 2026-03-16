@@ -7,6 +7,7 @@ interface AuthUser {
   name: string;
   fullName: string;
   plan: string;
+  role: string;
   avatarUrl: string | null;
   emailVerified: boolean;
 }

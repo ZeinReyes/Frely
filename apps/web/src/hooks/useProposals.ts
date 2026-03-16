@@ -1,6 +1,6 @@
-import { getErrorMessage } from '@/lib/utils';
 'use client';
 
+import { getErrorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { proposalsApi, contractsApi } from '@/lib/proposals';
 import { toast } from '@/hooks/useToast';

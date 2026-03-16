@@ -35,35 +35,32 @@ const schema = z
 type FormData = z.infer<typeof schema>;
 
 const pwRules = [
-  { label: 'At least 8 characters',     test: (p: string) => p.length >= 8 },
-  { label: 'One uppercase letter',       test: (p: string) => /[A-Z]/.test(p) },
-  { label: 'One lowercase letter',       test: (p: string) => /[a-z]/.test(p) },
-  { label: 'One number',                 test: (p: string) => /[0-9]/.test(p) },
-  { label: 'One special character',      test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+  { label: 'At least 8 characters',  test: (p: string) => p.length >= 8 },
+  { label: 'One uppercase letter',    test: (p: string) => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter',    test: (p: string) => /[a-z]/.test(p) },
+  { label: 'One number',              test: (p: string) => /[0-9]/.test(p) },
+  { label: 'One special character',   test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
 
 export default function RegisterPage() {
   const router    = useRouter();
   const { toast } = useToast();
-  const [showPw, setShowPw]        = useState(false);
+  const [showPw, setShowPw]           = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [registered, setRegistered]   = useState(false);
-  const [pwValue, setPwValue]          = useState('');
+  const [pwValue, setPwValue]         = useState('');
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const password = watch('password', '');
-
   const onSubmit = async (data: FormData) => {
     const { error } = await signUp.email({
-      email:    data.email,
-      password: data.password,
-      name:     data.fullName,
+      email:       data.email,
+      password:    data.password,
+      name:        data.fullName,
       callbackURL: 'http://localhost:3000/dashboard',
     });
 
@@ -79,15 +76,16 @@ export default function RegisterPage() {
     setRegistered(true);
   };
 
-  // Show email verification notice
   if (registered) {
     return (
       <div className="auth-card animate-fade-in text-center">
-        <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-primary-50 dark:bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Check className="h-8 w-8 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your inbox</h2>
-        <p className="text-gray-500 text-sm mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Check your inbox
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
           We&apos;ve sent a verification link to your email address. Click it to activate your account.
         </p>
         <Button variant="secondary" className="w-full" onClick={() => router.push('/login')}>
@@ -100,8 +98,10 @@ export default function RegisterPage() {
   return (
     <div className="auth-card animate-fade-in">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
-        <p className="mt-1 text-sm text-gray-500">Start managing your freelance business</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create your account</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Start managing your freelance business
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
         {/* Password */}
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Password <span className="text-danger">*</span>
           </label>
           <div className="relative">
@@ -143,13 +143,12 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
 
-          {/* Password strength rules */}
           {pwValue && (
             <ul className="mt-2 space-y-1">
               {pwRules.map((rule) => {
@@ -158,9 +157,9 @@ export default function RegisterPage() {
                   <li key={rule.label} className="flex items-center gap-1.5 text-xs">
                     {passed
                       ? <Check className="h-3.5 w-3.5 text-secondary" />
-                      : <X className="h-3.5 w-3.5 text-gray-300" />
+                      : <X    className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600" />
                     }
-                    <span className={passed ? 'text-secondary' : 'text-gray-400'}>
+                    <span className={passed ? 'text-secondary' : 'text-gray-400 dark:text-gray-500'}>
                       {rule.label}
                     </span>
                   </li>
@@ -172,7 +171,7 @@ export default function RegisterPage() {
 
         {/* Confirm password */}
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Confirm password <span className="text-danger">*</span>
           </label>
           <div className="relative">
@@ -186,7 +185,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -200,7 +199,7 @@ export default function RegisterPage() {
           Create account
         </Button>
 
-        <p className="text-xs text-center text-gray-400">
+        <p className="text-xs text-center text-gray-400 dark:text-gray-500">
           By signing up you agree to our{' '}
           <a href="#" className="text-primary hover:underline">Terms of Service</a>
           {' '}and{' '}
@@ -208,7 +207,7 @@ export default function RegisterPage() {
         </p>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
         Already have an account?{' '}
         <Link href="/login" className="text-primary hover:text-primary-600 font-medium">
           Sign in

@@ -4,25 +4,33 @@ import { useSession, signOut } from '@/lib/auth-client';
 import { useAuthStore } from '@/stores/authStore';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 
 export function useAuth() {
   const { data: session, isPending } = useSession();
   const { user, setUser, setLoading, clearAuth } = useAuthStore();
   const router = useRouter();
 
-  // Sync Better Auth session → Zustand store
   useEffect(() => {
     setLoading(isPending);
-    if (session?.user) {
-      setUser({
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        fullName: (session.user as { fullName?: string }).fullName || session.user.name,
-        plan: (session.user as { plan?: string }).plan || 'STARTER',
-        avatarUrl: session.user.image || null,
-        emailVerified: session.user.emailVerified,
-      });
+
+    if (session?.user && !isPending) {
+      // Fetch full profile from DB to get plan, role, fullName
+      api.get('/api/settings/profile')
+        .then(({ data }) => {
+          const profile = data.data.profile;
+          setUser({
+            id:            session.user.id,
+            email:         session.user.email,
+            name:          session.user.name,
+            fullName:      profile.fullName || session.user.name,
+            plan:          profile.plan     || 'STARTER',
+            role:          profile.role     || 'USER',
+            avatarUrl:     profile.image    || session.user.image || null,
+            emailVerified: session.user.emailVerified,
+          });
+        })
+        .catch(() => clearAuth());
     } else if (!isPending) {
       clearAuth();
     }
@@ -35,8 +43,8 @@ export function useAuth() {
   };
 
   return {
-    user: session?.user ? user : null,
-    isLoading: isPending,
+    user:            session?.user ? user : null,
+    isLoading:       isPending,
     isAuthenticated: !!session?.user,
     logout,
   };

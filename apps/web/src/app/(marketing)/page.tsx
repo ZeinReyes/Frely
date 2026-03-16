@@ -109,10 +109,10 @@ function useLandingContent(): LandingContent {
   const { data } = useQuery<LandingContent>({
     queryKey: ['landing-content'],
     queryFn:  async () => {
-      const { data } = await api.get('/api/admin/landing');
+      const { data } = await api.get('/api/public/landing');
       return data.data.content as LandingContent;
     },
-    staleTime: 1000 * 60 * 5, // cache for 5 min
+    staleTime: 0, // cache for 5 min
   });
 
   return {
@@ -129,10 +129,10 @@ function usePlans(): Plan[] {
   const { data } = useQuery<Plan[]>({
     queryKey: ['landing-plans'],
     queryFn:  async () => {
-      const { data } = await api.get('/api/admin/plans');
+      const { data } = await api.get('/api/public/landing');
       return data.data.plans as Plan[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
   // filter hidden, sort by sortOrder, fall back to defaults
   const plans = data ?? DEFAULT_PLANS;
@@ -520,7 +520,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">
-            <p>© 2026 Frely. Built with ❤️ for Filipino freelancers.</p>
+            <p>© 2026 Frely. Built with ❤️ for freelancers.</p>
             <p>Secure payments by PayMongo & PayPal</p>
           </div>
         </div>
