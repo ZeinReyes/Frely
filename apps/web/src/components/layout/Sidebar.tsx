@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Users, FolderKanban, Clock,
-  FileText, ScrollText, Receipt, Bell, Settings, LogOut,
+  FileText, ScrollText, Receipt, Bell, Settings, LogOut, BarChart2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/proposals',     label: 'Proposals',  icon: FileText },
   { href: '/contracts',     label: 'Contracts',  icon: ScrollText },
   { href: '/invoices',      label: 'Invoices',   icon: Receipt },
+  { href: '/analytics',     label: 'Analytics',    icon: BarChart2 },
   { href: '/notifications', label: 'Notifications', icon: Bell },
 ];
 
