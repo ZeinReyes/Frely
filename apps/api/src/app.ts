@@ -100,7 +100,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Health Check
 // ─────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'vyrn-api', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'Frely-api', timestamp: new Date().toISOString() });
 });
 
 // ─────────────────────────────────────────

@@ -162,6 +162,7 @@ export async function getProposalPDF(userId: string, proposalId: string): Promis
     clientEmail:     proposal.client.email,
     clientCompany:   proposal.client.company || undefined,
     freelancerName,
+    brandColor: branding?.primaryColor || undefined,
     introduction:    proposal.introduction || undefined,
     scope:           proposal.scope || undefined,
     lineItems:       proposal.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[],

@@ -61,16 +61,16 @@ function ProfileTab() {
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-6 max-w-lg">
       <div className="card p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-900">Personal Information</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-dark-foreground">Personal Information</h2>
 
-        <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
-          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center text-primary text-xl font-bold">
+        <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-dark-border">
+          <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary text-xl font-bold">
             {data?.name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">{data?.name}</p>
-            <p className="text-xs text-gray-500">{data?.email}</p>
-            <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary-50 text-primary rounded-full font-medium">
+            <p className="text-sm font-semibold text-gray-900 dark:text-dark-foreground">{data?.name}</p>
+            <p className="text-xs text-gray-500 dark:text-dark-muted-fg">{data?.email}</p>
+            <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary rounded-full font-medium">
               {data?.plan} plan
             </span>
           </div>
@@ -80,7 +80,7 @@ function ProfileTab() {
         <Input label="Full name" placeholder="Used on invoices and proposals" {...register('fullName')} />
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Timezone</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-muted-fg">Timezone</label>
           <select className="input" {...register('timezone')}>
             {TIMEZONES.map(tz => (
               <option key={tz} value={tz}>{tz}</option>
@@ -102,7 +102,6 @@ function ProfileTab() {
 function BrandingTab() {
   const queryClient = useQueryClient();
   const { toast }   = useToast();
-  const [previewColor, setPreviewColor] = useState('#6C63FF');
 
   const { data } = useQuery({
     queryKey: ['settings', 'branding'],
@@ -112,11 +111,12 @@ function BrandingTab() {
     },
   });
 
-  const { register, handleSubmit, reset, watch, formState: { isSubmitting, isDirty } } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { isSubmitting, isDirty } } = useForm({
     defaultValues: { companyName: '', primaryColor: '#6C63FF', logoUrl: '' },
   });
 
-  const watchedColor = watch('primaryColor');
+  // Single source of truth — watch the RHF field value
+  const primaryColor = watch('primaryColor');
 
   useEffect(() => {
     if (data) {
@@ -125,13 +125,8 @@ function BrandingTab() {
         primaryColor: data.primaryColor || '#6C63FF',
         logoUrl:      data.logoUrl      || '',
       });
-      setPreviewColor(data.primaryColor || '#6C63FF');
     }
   }, [data, reset]);
-
-  useEffect(() => {
-    if (watchedColor) setPreviewColor(watchedColor);
-  }, [watchedColor]);
 
   const mutation = useMutation({
     mutationFn: (input: Record<string, string>) => api.put('/api/settings/branding', input),
@@ -145,8 +140,8 @@ function BrandingTab() {
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-6 max-w-lg">
       <div className="card p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-900">Brand Identity</h2>
-        <p className="text-xs text-gray-500">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-dark-foreground">Brand Identity</h2>
+        <p className="text-xs text-gray-500 dark:text-dark-muted-fg">
           Your branding appears on invoices, proposals, and contracts sent to clients.
         </p>
 
@@ -157,24 +152,28 @@ function BrandingTab() {
         />
 
         <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">Brand color</label>
-          <p className="text-xs text-gray-400">Enter a full 6-digit hex code e.g. #6C63FF</p>
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-muted-fg">Brand color</label>
+          <p className="text-xs text-gray-400 dark:text-dark-subtle">Enter a full 6-digit hex code e.g. #6C63FF</p>
           <div className="flex items-center gap-3">
+            {/* ✅ Color picker: NOT registered — uses onChange to call setValue */}
             <input
               type="color"
-              className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
-              {...register('primaryColor')}
+              className="w-10 h-10 rounded-lg border border-gray-200 dark:border-dark-border cursor-pointer p-0.5"
+              value={primaryColor}
+              onChange={(e) => setValue('primaryColor', e.target.value, { shouldDirty: true })}
             />
+            {/* ✅ Text input: the only registered field */}
             <input
               type="text"
               className="input flex-1 font-mono text-sm"
-              {...register('primaryColor')}
               placeholder="#6C63FF"
               maxLength={7}
+              {...register('primaryColor')}
             />
+            {/* Live preview swatch */}
             <div
-              className="w-10 h-10 rounded-lg border border-gray-200 shrink-0"
-              style={{ backgroundColor: previewColor }}
+              className="w-10 h-10 rounded-lg border border-gray-200 dark:border-dark-border shrink-0"
+              style={{ backgroundColor: primaryColor }}
             />
           </div>
         </div>
@@ -188,28 +187,28 @@ function BrandingTab() {
 
       {/* Preview */}
       <div className="card p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Preview</h3>
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-foreground mb-3">Preview</h3>
+        <div className="border border-gray-200 dark:border-dark-border rounded-lg p-4 bg-gray-50 dark:bg-dark-elevated">
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 dark:border-dark-border">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: previewColor }}
+              style={{ backgroundColor: primaryColor }}
             >
-              V
+              {watch('companyName')?.charAt(0)?.toUpperCase() || 'F'}
             </div>
             <div>
-              <p className="text-sm font-bold" style={{ color: previewColor }}>
+              <p className="text-sm font-bold" style={{ color: primaryColor }}>
                 {watch('companyName') || 'Your Company'}
               </p>
-              <p className="text-xs text-gray-500">Invoice #INV-2026-0001</p>
+              <p className="text-xs text-gray-500 dark:text-dark-muted-fg">Invoice #INV-2026-0001</p>
             </div>
           </div>
           <div className="space-y-1">
-            <div className="h-2 bg-gray-200 rounded w-3/4" />
-            <div className="h-2 bg-gray-200 rounded w-1/2" />
+            <div className="h-2 bg-gray-200 dark:bg-dark-muted rounded w-3/4" />
+            <div className="h-2 bg-gray-200 dark:bg-dark-muted rounded w-1/2" />
           </div>
-          <div className="mt-3 pt-3 border-t-2" style={{ borderColor: previewColor }}>
-            <p className="text-xs font-bold" style={{ color: previewColor }}>Total: $1,200.00</p>
+          <div className="mt-3 pt-3 border-t-2" style={{ borderColor: primaryColor }}>
+            <p className="text-xs font-bold" style={{ color: primaryColor }}>Total: $1,200.00</p>
           </div>
         </div>
       </div>
@@ -227,10 +226,10 @@ function BrandingTab() {
 function PaymentsTab() {
   const queryClient = useQueryClient();
   const { toast }   = useToast();
-  const [showPayPalSecret,    setShowPayPalSecret]    = useState(false);
-  const [showPaymongoSecret,  setShowPaymongoSecret]  = useState(false);
-  const [savedPayPal,         setSavedPayPal]         = useState(false);
-  const [savedPaymongo,       setSavedPaymongo]       = useState(false);
+  const [showPayPalSecret,   setShowPayPalSecret]   = useState(false);
+  const [showPaymongoSecret, setShowPaymongoSecret] = useState(false);
+  const [savedPayPal,        setSavedPayPal]        = useState(false);
+  const [savedPaymongo,      setSavedPaymongo]      = useState(false);
 
   const { data } = useQuery({
     queryKey: ['settings', 'payments'],
@@ -286,7 +285,7 @@ function PaymentsTab() {
       {/* PayPal */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-sm font-semibold text-gray-900">PayPal</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-dark-foreground">PayPal</h2>
           <a
             href="https://developer.paypal.com/dashboard/applications"
             target="_blank"
@@ -296,12 +295,12 @@ function PaymentsTab() {
             Get credentials <ExternalLink className="h-3 w-3" />
           </a>
         </div>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-xs text-gray-500 dark:text-dark-muted-fg mb-4">
           For international clients. Create an app at developer.paypal.com to get your Client ID and Secret.
         </p>
         <form onSubmit={paypalForm.handleSubmit(savePayPal)} className="space-y-3">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Mode</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-muted-fg">Mode</label>
             <select className="input" {...paypalForm.register('paypalMode')}>
               <option value="sandbox">Sandbox (testing)</option>
               <option value="live">Live (production)</option>
@@ -310,7 +309,7 @@ function PaymentsTab() {
           <Input label="PayPal email" placeholder="your@paypal.com" {...paypalForm.register('paypalEmail')} />
           <Input label="Client ID" placeholder="AaBbCc..." {...paypalForm.register('paypalClientId')} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Client Secret</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-muted-fg">Client Secret</label>
             <div className="relative">
               <input
                 type={showPayPalSecret ? 'text' : 'password'}
@@ -336,7 +335,7 @@ function PaymentsTab() {
       {/* PayMongo */}
       <div className="card p-6">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-sm font-semibold text-gray-900">PayMongo</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-dark-foreground">PayMongo</h2>
           <a
             href="https://dashboard.paymongo.com/developers"
             target="_blank"
@@ -346,13 +345,13 @@ function PaymentsTab() {
             Get credentials <ExternalLink className="h-3 w-3" />
           </a>
         </div>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-xs text-gray-500 dark:text-dark-muted-fg mb-4">
           For Philippine clients. Accepts GCash, Maya, and credit cards. Get keys from your PayMongo dashboard.
         </p>
         <form onSubmit={paymongoForm.handleSubmit(savePaymongo)} className="space-y-3">
           <Input label="Public key" placeholder="pk_live_..." {...paymongoForm.register('paymongoPublicKey')} />
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">Secret key</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-muted-fg">Secret key</label>
             <div className="relative">
               <input
                 type={showPaymongoSecret ? 'text' : 'password'}
@@ -375,10 +374,10 @@ function PaymentsTab() {
         </form>
       </div>
 
-      <div className="card p-4 bg-blue-50 border-blue-200">
-        <p className="text-xs text-blue-800">
+      <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <p className="text-xs text-blue-800 dark:text-blue-300">
           <strong>Note:</strong> Payment credentials are stored securely per account.
-          Each freelancer using Vyrn connects their own payment accounts.
+          Each freelancer using Frely connects their own payment accounts.
         </p>
       </div>
     </div>
@@ -399,15 +398,15 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit mb-6">
+      <div className="flex gap-1 bg-gray-100 dark:bg-dark-muted rounded-xl p-1 w-fit mb-6">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               activeTab === id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-dark-elevated text-gray-900 dark:text-dark-foreground shadow-sm'
+                : 'text-gray-500 dark:text-dark-muted-fg hover:text-gray-700 dark:hover:text-dark-foreground'
             }`}
           >
             <Icon className="h-4 w-4" />

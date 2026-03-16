@@ -72,3 +72,193 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+
+/* ─────────────────────────────────────────
+   DARK MODE
+   ───────────────────────────────────────── */
+.dark body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+.dark .card {
+  @apply bg-gray-900 border-gray-700/50;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.dark .input {
+  @apply bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500;
+}
+
+.dark .input:focus {
+  @apply border-primary ring-primary/20;
+}
+
+.dark select.input {
+  @apply bg-gray-800 text-gray-100;
+}
+
+.dark .page-title {
+  @apply text-gray-100;
+}
+
+.dark .page-subtitle {
+  @apply text-gray-400;
+}
+
+.dark .auth-card {
+  @apply bg-gray-900;
+}
+
+/* Sidebar dark */
+.dark .sidebar {
+  @apply bg-gray-900 border-gray-800;
+}
+
+/* Header dark */
+.dark header {
+  @apply bg-gray-900 border-gray-800;
+}
+
+/* Table dark */
+.dark table thead tr {
+  @apply bg-gray-800;
+}
+
+.dark table tbody tr:hover {
+  @apply bg-gray-800/50;
+}
+
+.dark table th,
+.dark table td {
+  @apply border-gray-800 text-gray-300;
+}
+
+.dark .divide-gray-100 > * {
+  border-color: rgb(31 41 55);
+}
+
+.dark .divide-y > * {
+  border-color: rgb(31 41 55);
+}
+
+/* Text overrides */
+.dark .text-gray-900 { color: rgb(243 244 246); }
+.dark .text-gray-700 { color: rgb(209 213 219); }
+.dark .text-gray-600 { color: rgb(156 163 175); }
+.dark .text-gray-500 { color: rgb(107 114 128); }
+
+/* Background overrides */
+.dark .bg-gray-50  { background-color: rgb(17 24 39); }
+.dark .bg-gray-100 { background-color: rgb(31 41 55); }
+.dark .bg-white    { background-color: rgb(17 24 39); }
+
+/* Border overrides */
+.dark .border-gray-200 { border-color: rgb(55 65 81); }
+.dark .border-gray-100 { border-color: rgb(31 41 55); }
+
+/* Modal / dropdown dark */
+.dark .shadow-modal {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Additional dark mode fixes ── */
+
+/* Main content area background */
+.dark main,
+.dark [class*="page-container"] {
+  @apply bg-gray-950;
+}
+
+/* Ensure full page background */
+.dark html,
+.dark body {
+  @apply bg-gray-950;
+}
+
+/* Search inputs */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark textarea,
+.dark select {
+  @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+/* Filter buttons / pill buttons */
+.dark button.border-gray-200 {
+  @apply border-gray-700 text-gray-300;
+}
+
+/* Dropdown menus */
+.dark .bg-white.border.border-gray-200.rounded-lg {
+  @apply bg-gray-900 border-gray-700;
+}
+
+/* Table rows */
+.dark tbody tr {
+  @apply bg-gray-900;
+}
+
+.dark tbody tr:hover {
+  @apply bg-gray-800;
+}
+
+/* Card overflow visible (used in tables) */
+.dark .card.overflow-visible,
+.dark .card.overflow-hidden {
+  @apply bg-gray-900 border-gray-800;
+}
+
+/* Status badges on dark */
+.dark .bg-gray-100 {
+  background-color: rgb(31 41 55);
+}
+
+/* Sidebar active item */
+.dark .bg-primary-50 {
+  background-color: rgba(108, 99, 255, 0.15);
+}
+
+/* Layout wrapper */
+.dark .min-h-screen {
+  @apply bg-gray-950;
+}
+
+/* Stat cards */
+.dark .bg-blue-50   { background-color: rgba(59, 130, 246, 0.1); }
+.dark .bg-green-50  { background-color: rgba(16, 185, 129, 0.1); }
+.dark .bg-amber-50  { background-color: rgba(245, 158, 11, 0.1); }
+.dark .bg-red-50    { background-color: rgba(239, 68, 68, 0.1);  }
+.dark .bg-purple-50 { background-color: rgba(139, 92, 246, 0.1); }
+
+/* Status filter pills */
+.dark .rounded-full.border.border-gray-200,
+.dark .rounded-lg.border.border-gray-200,
+.dark button.rounded-full,
+.dark button.rounded-lg:not([class*="bg-primary"]):not([class*="btn"]) {
+  @apply bg-gray-800 border-gray-700 text-gray-300;
+}
+
+/* Status badges */
+.dark .bg-green-100  { background-color: rgba(16, 185, 129, 0.15); }
+.dark .text-green-800 { color: rgb(110 231 183); }
+
+.dark .bg-blue-100   { background-color: rgba(59, 130, 246, 0.15); }
+.dark .text-blue-800  { color: rgb(147 197 253); }
+
+.dark .bg-purple-100  { background-color: rgba(139, 92, 246, 0.15); }
+.dark .text-purple-800 { color: rgb(196 181 253); }
+
+.dark .bg-yellow-100  { background-color: rgba(245, 158, 11, 0.15); }
+.dark .text-yellow-800 { color: rgb(253 230 138); }
+
+.dark .bg-red-100    { background-color: rgba(239, 68, 68, 0.15); }
+.dark .text-red-800   { color: rgb(252 165 165); }
+
+.dark .bg-amber-100  { background-color: rgba(245, 158, 11, 0.15); }
+.dark .text-amber-800 { color: rgb(253 230 138); }
+
+.dark .bg-gray-200   { background-color: rgb(55 65 81); }
+.dark .text-gray-800  { color: rgb(209 213 219); }

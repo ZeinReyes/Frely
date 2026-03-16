@@ -96,7 +96,7 @@ function buildVerificationEmail(name: string, url: string): string {
     <body style="font-family: Inter, sans-serif; background: #F9FAFB; padding: 40px 0; margin: 0;">
       <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <div style="background: #6C63FF; padding: 32px; text-align: center;">
-          <h1 style="color: #FFFFFF; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">VYRN</h1>
+          <h1 style="color: #FFFFFF; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Frely</h1>
         </div>
         <div style="padding: 40px 32px;">
           <h2 style="color: #111827; margin: 0 0 12px; font-size: 20px;">Welcome, ${name}!</h2>
@@ -124,7 +124,7 @@ function buildPasswordResetEmail(name: string, url: string): string {
     <body style="font-family: Inter, sans-serif; background: #F9FAFB; padding: 40px 0; margin: 0;">
       <div style="max-width: 520px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
         <div style="background: #6C63FF; padding: 32px; text-align: center;">
-          <h1 style="color: #FFFFFF; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">VYRN</h1>
+          <h1 style="color: #FFFFFF; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Frely</h1>
         </div>
         <div style="padding: 40px 32px;">
           <h2 style="color: #111827; margin: 0 0 12px; font-size: 20px;">Reset your password</h2>
