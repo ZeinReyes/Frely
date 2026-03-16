@@ -1,8 +1,9 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi, tasksApi } from '@/lib/projects';
-import { useToast } from '@/hooks/useToast';
+import { toast } from '@/hooks/useToast';
 import type {
   CreateProjectInput,
   UpdateProjectInput,
@@ -56,7 +57,6 @@ export function useKanbanBoard(projectId: string) {
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: CreateProjectInput) => projectsApi.create(input),
@@ -76,7 +76,6 @@ export function useCreateProject() {
 
 export function useUpdateProject(id: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: UpdateProjectInput) => projectsApi.update(id, input),
@@ -85,15 +84,12 @@ export function useUpdateProject(id: string) {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.detail(id) });
       toast({ title: 'Project updated', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to update project', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to update project', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useDeleteProject() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (id: string) => projectsApi.delete(id),
@@ -101,9 +97,7 @@ export function useDeleteProject() {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.all });
       toast({ title: 'Project deleted', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to delete project', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to delete project', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
@@ -128,7 +122,6 @@ export function useTaskComments(id: string) {
 
 export function useCreateTask(projectId: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: CreateTaskInput) => tasksApi.create(projectId, input),
@@ -136,15 +129,12 @@ export function useCreateTask(projectId: string) {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.board(projectId) });
       toast({ title: 'Task created', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to create task', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to create task', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useUpdateTask(taskId: string, projectId: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: UpdateTaskInput) => tasksApi.update(taskId, input),
@@ -153,9 +143,7 @@ export function useUpdateTask(taskId: string, projectId: string) {
       queryClient.invalidateQueries({ queryKey: TASK_KEYS.detail(taskId) });
       toast({ title: 'Task updated', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to update task', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to update task', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
@@ -173,7 +161,6 @@ export function useMoveTask(projectId: string) {
 
 export function useDeleteTask(projectId: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (taskId: string) => tasksApi.delete(taskId),
@@ -181,9 +168,7 @@ export function useDeleteTask(projectId: string) {
       queryClient.invalidateQueries({ queryKey: PROJECT_KEYS.board(projectId) });
       toast({ title: 'Task deleted', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to delete task', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to delete task', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 

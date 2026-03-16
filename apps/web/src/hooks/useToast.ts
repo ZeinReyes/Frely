@@ -1,54 +1,57 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 type ToastVariant = 'default' | 'success' | 'error' | 'warning';
 
-interface Toast {
-  id: string;
-  title: string;
+export interface Toast {
+  id:           string;
+  title:        string;
   description?: string;
-  variant: ToastVariant;
+  variant:      ToastVariant;
 }
 
-interface ToastState {
-  toasts: Toast[];
-  toast: (opts: Omit<Toast, 'id'>) => void;
-  dismiss: (id: string) => void;
+// ─────────────────────────────────────────
+// GLOBAL EVENT BUS — works across components
+// ─────────────────────────────────────────
+const TOAST_EVENT = 'vyrn:toast';
+
+export function toast(opts: Omit<Toast, 'id'>) {
+  if (typeof window === 'undefined') return;
+  const id = Math.random().toString(36).slice(2);
+  window.dispatchEvent(new CustomEvent(TOAST_EVENT, { detail: { ...opts, id } }));
 }
 
-// Simple global toast state
-let toastFn: ((opts: Omit<Toast, 'id'>) => void) | null = null;
+toast.success = (title: string, description?: string) =>
+  toast({ title, description, variant: 'success' });
+toast.error = (title: string, description?: string) =>
+  toast({ title, description, variant: 'error' });
+toast.warning = (title: string, description?: string) =>
+  toast({ title, description, variant: 'warning' });
+toast.default = (title: string, description?: string) =>
+  toast({ title, description, variant: 'default' });
 
-export function useToast(): ToastState {
+// ─────────────────────────────────────────
+// HOOK — used by Toaster to render
+// ─────────────────────────────────────────
+export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback((opts: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).slice(2);
-    const newToast = { ...opts, id };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const newToast = (e as CustomEvent<Toast>).detail;
+      setToasts((prev) => [...prev, newToast]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+      }, 5000);
+    };
+    window.addEventListener(TOAST_EVENT, handler);
+    return () => window.removeEventListener(TOAST_EVENT, handler);
   }, []);
 
   const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  toastFn = toast;
-
   return { toasts, toast, dismiss };
 }
-
-// Standalone toast — call from anywhere
-export const toast = {
-  success: (title: string, description?: string) =>
-    toastFn?.({ title, description, variant: 'success' }),
-  error: (title: string, description?: string) =>
-    toastFn?.({ title, description, variant: 'error' }),
-  warning: (title: string, description?: string) =>
-    toastFn?.({ title, description, variant: 'warning' }),
-  default: (title: string, description?: string) =>
-    toastFn?.({ title, description, variant: 'default' }),
-};

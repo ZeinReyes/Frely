@@ -1,6 +1,7 @@
+import { getErrorMessage } from '@/lib/utils';
 import api from '@/lib/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/useToast';
+import { toast } from '@/hooks/useToast';
 import type { Invoice, InvoiceStats, CreateInvoiceInput } from '@/types/invoice';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -93,33 +94,30 @@ export function useInvoice(id: string) {
 
 export function useCreateInvoice() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
   return useMutation({
     mutationFn: (input: CreateInvoiceInput) => invoicesApi.create(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVOICE_KEYS.all });
       toast({ title: 'Invoice created', variant: 'success' });
     },
-    onError: () => toast({ title: 'Failed to create invoice', variant: 'error' }),
+    onError: (error: unknown) => toast({ title: 'Failed to create invoice', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useSendInvoice() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
   return useMutation({
     mutationFn: (id: string) => invoicesApi.send(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVOICE_KEYS.all });
       toast({ title: 'Invoice marked as sent', variant: 'success' });
     },
-    onError: () => toast({ title: 'Failed to send invoice', variant: 'error' }),
+    onError: (error: unknown) => toast({ title: 'Failed to send invoice', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useSendInvoicePayPal() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
   return useMutation({
     mutationFn: (id: string) => invoicesApi.sendPayPal(id),
     onSuccess: () => {
@@ -137,26 +135,24 @@ export function useSendInvoicePayPal() {
 
 export function useMarkInvoicePaid() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
   return useMutation({
     mutationFn: ({ id, paidAt }: { id: string; paidAt?: string }) => invoicesApi.markPaid(id, paidAt),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVOICE_KEYS.all });
       toast({ title: 'Invoice marked as paid!', variant: 'success' });
     },
-    onError: () => toast({ title: 'Failed to mark as paid', variant: 'error' }),
+    onError: (error: unknown) => toast({ title: 'Failed to mark as paid', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useDeleteInvoice() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
   return useMutation({
     mutationFn: (id: string) => invoicesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVOICE_KEYS.all });
       toast({ title: 'Invoice deleted', variant: 'success' });
     },
-    onError: () => toast({ title: 'Failed to delete invoice', variant: 'error' }),
+    onError: (error: unknown) => toast({ title: 'Failed to delete invoice', description: getErrorMessage(error), variant: 'error' }),
   });
 }

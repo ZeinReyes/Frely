@@ -1,16 +1,17 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsApi } from '@/lib/clients';
-import { useToast } from '@/hooks/useToast';
+import { toast } from '@/hooks/useToast';
 import type { CreateClientInput, UpdateClientInput, ListClientsParams } from '@/types/client';
 
 export const CLIENT_KEYS = {
-  all:      ['clients'] as const,
-  list:     (params?: ListClientsParams) => ['clients', 'list', params] as const,
-  detail:   (id: string) => ['clients', 'detail', id] as const,
-  projects: (id: string) => ['clients', 'projects', id] as const,
-  invoices: (id: string) => ['clients', 'invoices', id] as const,
+  all:     ['clients'] as const,
+  list:    (params?: ListClientsParams) => ['clients', 'list', params] as const,
+  detail:  (id: string) => ['clients', 'detail', id] as const,
+  projects:(id: string) => ['clients', 'projects', id] as const,
+  invoices:(id: string) => ['clients', 'invoices', id] as const,
 };
 
 export function useClients(params?: ListClientsParams) {
@@ -46,7 +47,6 @@ export function useClientInvoices(id: string) {
 
 export function useCreateClient() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: CreateClientInput) => clientsApi.create(input),
@@ -66,7 +66,6 @@ export function useCreateClient() {
 
 export function useUpdateClient(id: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: UpdateClientInput) => clientsApi.update(id, input),
@@ -87,7 +86,6 @@ export function useUpdateClient(id: string) {
 
 export function useDeleteClient() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (id: string) => clientsApi.delete(id),
@@ -95,8 +93,6 @@ export function useDeleteClient() {
       queryClient.invalidateQueries({ queryKey: CLIENT_KEYS.all });
       toast({ title: 'Client deleted', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to delete client', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to delete client', description: getErrorMessage(error), variant: 'error' }),
   });
 }

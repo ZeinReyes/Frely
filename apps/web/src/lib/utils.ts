@@ -26,3 +26,16 @@ export function getInitials(name: string): string {
 export function truncate(str: string, length = 50): string {
   return str.length > length ? `${str.slice(0, length)}...` : str;
 }
+
+
+// Extract readable error message from API/axios error
+export function getErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+  if (!error) return fallback;
+  const err = error as { response?: { data?: { error?: { message?: string }; message?: string } }; message?: string };
+  return (
+    err?.response?.data?.error?.message ||
+    err?.response?.data?.message ||
+    err?.message ||
+    fallback
+  );
+}

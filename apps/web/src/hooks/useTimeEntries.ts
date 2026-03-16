@@ -1,8 +1,9 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { timeEntriesApi } from '@/lib/timeEntries';
-import { useToast } from '@/hooks/useToast';
+import { toast } from '@/hooks/useToast';
 import type {
   StartTimerInput,
   CreateTimeEntryInput,
@@ -28,7 +29,7 @@ export function useActiveTimer() {
   return useQuery({
     queryKey:        TIME_KEYS.active,
     queryFn:         () => timeEntriesApi.getActive(),
-    refetchInterval: 10000, // poll every second to keep elapsed time fresh
+    refetchInterval: 1000, // poll every second to keep elapsed time fresh
   });
 }
 
@@ -42,7 +43,6 @@ export function useTimeSummary(projectId: string) {
 
 export function useStartTimer() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: StartTimerInput) => timeEntriesApi.start(input),
@@ -51,15 +51,12 @@ export function useStartTimer() {
       queryClient.invalidateQueries({ queryKey: TIME_KEYS.all });
       toast({ title: 'Timer started', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to start timer', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to start timer', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useStopTimer() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: () => timeEntriesApi.stop(),
@@ -68,15 +65,12 @@ export function useStopTimer() {
       queryClient.invalidateQueries({ queryKey: TIME_KEYS.all });
       toast({ title: 'Timer stopped', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to stop timer', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to stop timer', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useCreateTimeEntry() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: CreateTimeEntryInput) => timeEntriesApi.create(input),
@@ -84,15 +78,12 @@ export function useCreateTimeEntry() {
       queryClient.invalidateQueries({ queryKey: TIME_KEYS.all });
       toast({ title: 'Time entry added', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to add time entry', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to add time entry', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useUpdateTimeEntry(id: string) {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (input: UpdateTimeEntryInput) => timeEntriesApi.update(id, input),
@@ -100,15 +91,12 @@ export function useUpdateTimeEntry(id: string) {
       queryClient.invalidateQueries({ queryKey: TIME_KEYS.all });
       toast({ title: 'Time entry updated', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to update time entry', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to update time entry', description: getErrorMessage(error), variant: 'error' }),
   });
 }
 
 export function useDeleteTimeEntry() {
   const queryClient = useQueryClient();
-  const { toast }   = useToast();
 
   return useMutation({
     mutationFn: (id: string) => timeEntriesApi.delete(id),
@@ -116,8 +104,6 @@ export function useDeleteTimeEntry() {
       queryClient.invalidateQueries({ queryKey: TIME_KEYS.all });
       toast({ title: 'Time entry deleted', variant: 'success' });
     },
-    onError: () => {
-      toast({ title: 'Failed to delete time entry', variant: 'error' });
-    },
+    onError: (error: unknown) => toast({ title: 'Failed to delete time entry', description: getErrorMessage(error), variant: 'error' }),
   });
 }

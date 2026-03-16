@@ -1,3 +1,4 @@
+import { limitInvoices } from '../middleware/planLimits';
 import { Router } from 'express';
 import * as invoiceController from '../controllers/invoiceController';
 import { validate } from '../middleware/validate';
@@ -7,7 +8,7 @@ const router = Router();
 
 router.get('/',              invoiceController.listInvoices);
 router.get('/stats',         invoiceController.getStats);
-router.post('/',             validate(createInvoiceSchema), invoiceController.createInvoice);
+router.post('/', limitInvoices(),             validate(createInvoiceSchema), invoiceController.createInvoice);
 router.get('/:id',           invoiceController.getInvoice);
 router.put('/:id',           validate(updateInvoiceSchema), invoiceController.updateInvoice);
 router.post('/:id/send',     invoiceController.sendInvoice);
