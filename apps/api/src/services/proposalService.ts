@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
 import { generatePDF } from '../utils/pdfGenerator';
+import { sendProposalEmail } from './emailService';
 import type {
   CreateProposalInput,
   UpdateProposalInput,
@@ -18,7 +19,7 @@ function generateNumber(prefix: string): string {
 // ─────────────────────────────────────────
 export async function listProposals(userId: string, clientId?: string) {
   const proposals = await prisma.proposal.findMany({
-    where: { userId, ...(clientId && { clientId }) },
+    where:   { userId, ...(clientId && { clientId }) },
     orderBy: { createdAt: 'desc' },
     include: {
       client: { select: { id: true, name: true, email: true, company: true } },
@@ -32,7 +33,7 @@ export async function listProposals(userId: string, clientId?: string) {
 // ─────────────────────────────────────────
 export async function getProposalById(userId: string, proposalId: string) {
   const proposal = await prisma.proposal.findFirst({
-    where: { id: proposalId, userId },
+    where:   { id: proposalId, userId },
     include: {
       client:  { select: { id: true, name: true, email: true, company: true } },
       project: { select: { id: true, name: true } },
@@ -54,20 +55,20 @@ export async function createProposal(userId: string, input: CreateProposalInput)
   const proposal = await prisma.proposal.create({
     data: {
       userId,
-      clientId:     input.clientId,
-      projectId:    input.projectId,
+      clientId:       input.clientId,
+      projectId:      input.projectId,
       proposalNumber: generateNumber('PROP'),
-      title:        input.title,
-      introduction: input.introduction,
-      scope:        input.scope,
-      terms:        input.terms,
-      lineItems:    input.lineItems as never,
-      subtotal:     total,
+      title:          input.title,
+      introduction:   input.introduction,
+      scope:          input.scope,
+      terms:          input.terms,
+      lineItems:      input.lineItems as never,
+      subtotal:       total,
       total,
-      currency:     input.currency || 'USD',
-      validUntil:   input.validUntil ? new Date(input.validUntil) : undefined,
-      notes:        input.notes,
-      status:       'DRAFT',
+      currency:       input.currency || 'USD',
+      validUntil:     input.validUntil ? new Date(input.validUntil) : undefined,
+      notes:          input.notes,
+      status:         'DRAFT',
     },
     include: {
       client: { select: { id: true, name: true, email: true, company: true } },
@@ -114,15 +115,80 @@ export async function updateProposal(
 // ─────────────────────────────────────────
 export async function sendProposal(userId: string, proposalId: string) {
   const proposal = await prisma.proposal.findFirst({
-    where: { id: proposalId, userId },
+    where:   { id: proposalId, userId },
     include: { client: true },
   });
   if (!proposal) throw AppError.notFound('Proposal not found');
-
+  if (!proposal.client.email) throw AppError.badRequest('Client has no email address');
+ 
+  // Fetch freelancer branding
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({
+      where:  { id: userId },
+      select: { name: true, email: true },
+    }),
+    prisma.branding.findUnique({
+      where:  { userId },
+      select: { companyName: true, primaryColor: true },
+    }),
+  ]);
+ 
+  const senderName  = branding?.companyName || user?.name || 'Your Freelancer';
+  const senderEmail = user?.email           || '';
+  const brandColor  = branding?.primaryColor || '#6C63FF';
+ 
+  // Generate the PDF to attach
+  const pdfBuffer = await generatePDF({
+    type:          'proposal',
+    title:         proposal.title,
+    number:        proposal.proposalNumber,
+    clientName:    proposal.client.name,
+    clientEmail:   proposal.client.email,
+    clientCompany: proposal.client.company || undefined,
+    freelancerName: senderName,
+    brandColor,
+    introduction:  proposal.introduction || undefined,
+    scope:         proposal.scope        || undefined,
+    lineItems:     proposal.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[],
+    subtotal:      Number(proposal.subtotal),
+    total:         Number(proposal.total),
+    currency:      proposal.currency,
+    validUntil:    proposal.validUntil?.toISOString(),
+    terms:         proposal.terms  || undefined,
+    notes:         proposal.notes  || undefined,
+    createdAt:     proposal.createdAt.toISOString(),
+  });
+ 
+  // Send email with PDF attached — no platform link
+  await sendProposalEmail({
+    to:             proposal.client.email,
+    clientName:     proposal.client.name,
+    senderName,
+    senderEmail,
+    title:          proposal.title,
+    total:          Number(proposal.total),
+    currency:       proposal.currency,
+    validUntil:     proposal.validUntil?.toISOString(),
+    pdfBuffer,
+    proposalNumber: proposal.proposalNumber,
+    brandColor,
+  });
+ 
+  // Mark proposal as sent
   const updated = await prisma.proposal.update({
     where: { id: proposalId },
     data:  { status: 'SENT', sentAt: new Date() },
+    include: {
+      client: { select: { id: true, name: true, email: true, company: true } },
+    },
   });
+ 
+  // Auto-upgrade client status: LEAD → PROPOSAL_SENT only (never downgrade)
+  await prisma.client.updateMany({
+    where: { id: proposal.clientId, userId, status: 'LEAD' },
+    data:  { status: 'PROPOSAL_SENT' },
+  });
+ 
   return updated;
 }
 
@@ -140,10 +206,8 @@ export async function deleteProposal(userId: string, proposalId: string) {
 // ─────────────────────────────────────────
 export async function getProposalPDF(userId: string, proposalId: string): Promise<Buffer> {
   const proposal = await prisma.proposal.findFirst({
-    where: { id: proposalId, userId },
-    include: {
-      client: true,
-    },
+    where:   { id: proposalId, userId },
+    include: { client: true },
   });
   if (!proposal) throw AppError.notFound('Proposal not found');
 
@@ -155,24 +219,24 @@ export async function getProposalPDF(userId: string, proposalId: string): Promis
   const freelancerName = branding?.companyName || user?.name || 'Freelancer';
 
   const pdf = await generatePDF({
-    type:            'proposal',
-    title:           proposal.title,
-    number:          proposal.proposalNumber,
-    clientName:      proposal.client.name,
-    clientEmail:     proposal.client.email,
-    clientCompany:   proposal.client.company || undefined,
+    type:          'proposal',
+    title:         proposal.title,
+    number:        proposal.proposalNumber,
+    clientName:    proposal.client.name,
+    clientEmail:   proposal.client.email,
+    clientCompany: proposal.client.company || undefined,
     freelancerName,
-    brandColor: branding?.primaryColor || undefined,
-    introduction:    proposal.introduction || undefined,
-    scope:           proposal.scope || undefined,
-    lineItems:       proposal.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[],
-    subtotal:        Number(proposal.subtotal),
-    total:           Number(proposal.total),
-    currency:        proposal.currency,
-    validUntil:      proposal.validUntil?.toISOString(),
-    terms:           proposal.terms || undefined,
-    notes:           proposal.notes || undefined,
-    createdAt:       proposal.createdAt.toISOString(),
+    brandColor:    branding?.primaryColor || undefined,
+    introduction:  proposal.introduction  || undefined,
+    scope:         proposal.scope         || undefined,
+    lineItems:     proposal.lineItems as { description: string; quantity: number; unitPrice: number; amount: number }[],
+    subtotal:      Number(proposal.subtotal),
+    total:         Number(proposal.total),
+    currency:      proposal.currency,
+    validUntil:    proposal.validUntil?.toISOString(),
+    terms:         proposal.terms  || undefined,
+    notes:         proposal.notes  || undefined,
+    createdAt:     proposal.createdAt.toISOString(),
   });
 
   return pdf;

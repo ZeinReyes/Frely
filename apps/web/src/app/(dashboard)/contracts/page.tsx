@@ -13,17 +13,18 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { Contract } from '@/types/proposal';
 
-const API_URL     = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const APP_URL     = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export default function ContractsPage() {
   const router = useRouter();
-  const [openMenu,      setOpenMenu]      = useState<string | null>(null);
-  const [deleteContract, setDeleteContract] = useState<Contract | null>(null);
-  const [copiedId,      setCopiedId]      = useState<string | null>(null);
+  const [openMenu,         setOpenMenu]         = useState<string | null>(null);
+  const [deleteContract,   setDeleteContract]   = useState<Contract | null>(null);
+  const [sendContractTarget, setSendContractTarget] = useState<Contract | null>(null);
+  const [copiedId,         setCopiedId]         = useState<string | null>(null);
 
-  const { data, isLoading }   = useContracts();
-  const sendContract          = useSendContract();
+  const { data, isLoading }    = useContracts();
+  const sendContractMutation   = useSendContract();
   const deleteContractMutation = useDeleteContract();
 
   const contracts: Contract[] = data?.contracts || [];
@@ -34,9 +35,14 @@ export default function ContractsPage() {
     setDeleteContract(null);
   };
 
+  const handleSend = async () => {
+    if (!sendContractTarget) return;
+    await sendContractMutation.mutateAsync(sendContractTarget.id);
+    setSendContractTarget(null);
+  };
+
   const copySignLink = (contract: Contract) => {
-    const link = `${APP_URL}/sign/${contract.signToken}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(`${APP_URL}/sign/${contract.signToken}`);
     setCopiedId(contract.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -133,10 +139,10 @@ export default function ContractsPage() {
                             )}
                             {contract.status === 'DRAFT' && (
                               <button
-                                onClick={() => { sendContract.mutate(contract.id); setOpenMenu(null); }}
+                                onClick={() => { setSendContractTarget(contract); setOpenMenu(null); }}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                               >
-                                <Send className="h-4 w-4" /> Mark as sent
+                                <Send className="h-4 w-4" /> Send to client
                               </button>
                             )}
                             <button
@@ -172,6 +178,19 @@ export default function ContractsPage() {
         </div>
       )}
 
+      {/* Send confirmation modal */}
+      {sendContractTarget && (
+        <ConfirmModal
+          title="Send contract to client"
+          description={`This will email the contract to ${sendContractTarget.client.name} (${sendContractTarget.client.email}) with a link to review and sign it.`}
+          confirmLabel="Send contract"
+          loading={sendContractMutation.isPending}
+          onConfirm={handleSend}
+          onClose={() => setSendContractTarget(null)}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
       {deleteContract && (
         <ConfirmModal
           title="Delete contract"

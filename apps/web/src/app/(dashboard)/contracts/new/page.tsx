@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +8,7 @@ import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import { useCreateContract } from '@/hooks/useProposals';
 import { useClients } from '@/hooks/useClients';
+import { AIContractModal } from '@/components/ui/AIContractModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -50,10 +52,12 @@ export default function NewContractPage() {
   const createContract = useCreateContract();
   const { data: clientsData } = useClients({ limit: 100 });
   const clients = clientsData?.data || [];
+  const [showAI, setShowAI] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -74,94 +78,116 @@ export default function NewContractPage() {
   };
 
   return (
-    <div className="page-container max-w-3xl">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to contracts
-      </button>
+    <>
+      <div className="page-container max-w-3xl">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to contracts
+        </button>
 
-      <h1 className="page-title mb-6">New Contract</h1>
+        <h1 className="page-title mb-6">New Contract</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="card p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">Contract Details</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Client <span className="text-danger">*</span>
-              </label>
-              <select className="input" {...register('clientId')}>
-                <option value="">Select client...</option>
-                {clients.map((c: { id: string; name: string }) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              {errors.clientId && <p className="text-xs text-danger">{errors.clientId.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="card p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900">Contract Details</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Client <span className="text-danger">*</span>
+                </label>
+                <select className="input" {...register('clientId')}>
+                  <option value="">Select client...</option>
+                  {clients.map((c: { id: string; name: string }) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {errors.clientId && <p className="text-xs text-danger">{errors.clientId.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">Currency</label>
+                <select className="input" {...register('currency')}>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="PHP">PHP — Philippine Peso</option>
+                </select>
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Currency</label>
-              <select className="input" {...register('currency')}>
-                <option value="USD">USD — US Dollar</option>
-                <option value="EUR">EUR — Euro</option>
-                <option value="GBP">GBP — British Pound</option>
-                <option value="CAD">CAD — Canadian Dollar</option>
-                <option value="PHP">PHP — Philippine Peso</option>
-              </select>
+            <Input
+              label="Contract title"
+              placeholder="e.g. Web Development Agreement"
+              required
+              error={errors.title?.message}
+              {...register('title')}
+            />
+            <div className="grid grid-cols-3 gap-4">
+              <Input
+                label="Contract value"
+                type="number"
+                placeholder="5000"
+                {...register('value')}
+              />
+              <Input
+                label="Start date"
+                type="date"
+                {...register('startDate')}
+              />
+              <Input
+                label="End date"
+                type="date"
+                {...register('endDate')}
+              />
             </div>
           </div>
-          <Input
-            label="Contract title"
-            placeholder="e.g. Web Development Agreement"
-            required
-            error={errors.title?.message}
-            {...register('title')}
-          />
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="Contract value"
-              type="number"
-              placeholder="5000"
-              {...register('value')}
-            />
-            <Input
-              label="Start date"
-              type="date"
-              {...register('startDate')}
-            />
-            <Input
-              label="End date"
-              type="date"
-              {...register('endDate')}
-            />
-          </div>
-        </div>
 
-        <div className="card p-6">
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Contract Body <span className="text-danger">*</span>
-            </label>
-            <p className="text-xs text-gray-500 mb-2">Edit the template below to match your terms</p>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Contract Body <span className="text-danger">*</span>
+                </label>
+                <p className="text-xs text-gray-500">Edit the template below to match your terms</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAI(true)}
+                className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+              >
+                ✨ AI suggest clauses
+              </button>
+            </div>
             <textarea
               rows={20}
-              className={`input resize-y font-mono text-sm ${errors.body ? 'border-danger' : ''}`}
+              className={`input resize-y font-mono text-sm mt-2 ${errors.body ? 'border-danger' : ''}`}
               {...register('body')}
             />
             {errors.body && <p className="text-xs text-danger">{errors.body.message}</p>}
           </div>
-        </div>
 
-        <div className="flex gap-3">
-          <Button type="button" variant="secondary" className="flex-1" onClick={() => router.back()}>
-            Cancel
-          </Button>
-          <Button type="submit" className="flex-1" loading={isSubmitting || createContract.isPending}>
-            Create contract
-          </Button>
-        </div>
-      </form>
-    </div>
+          <div className="flex gap-3">
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => router.back()}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1" loading={isSubmitting || createContract.isPending}>
+              Create contract
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {showAI && (
+        <AIContractModal
+          onAccept={(clauses) => {
+            const textarea = document.querySelector('textarea[name="body"]') as HTMLTextAreaElement;
+            const current  = textarea?.value || '';
+            setValue('body', current + '\n\n' + clauses);
+          }}
+          onClose={() => setShowAI(false)}
+        />
+      )}
+    </>
   );
 }

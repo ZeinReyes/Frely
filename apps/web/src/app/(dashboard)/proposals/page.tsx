@@ -17,11 +17,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function ProposalsPage() {
   const router = useRouter();
-  const [openMenu,      setOpenMenu]      = useState<string | null>(null);
+  const [openMenu,       setOpenMenu]       = useState<string | null>(null);
   const [deleteProposal, setDeleteProposal] = useState<Proposal | null>(null);
+  const [sendProposalTarget, setSendProposalTarget] = useState<Proposal | null>(null);
 
-  const { data, isLoading }  = useProposals();
-  const sendProposal         = useSendProposal();
+  const { data, isLoading }    = useProposals();
+  const sendProposalMutation   = useSendProposal();
   const deleteProposalMutation = useDeleteProposal();
 
   const proposals: Proposal[] = data?.proposals || [];
@@ -32,7 +33,13 @@ export default function ProposalsPage() {
     setDeleteProposal(null);
   };
 
-  const handleDownload = (id: string, number: string) => {
+  const handleSend = async () => {
+    if (!sendProposalTarget) return;
+    await sendProposalMutation.mutateAsync(sendProposalTarget.id);
+    setSendProposalTarget(null);
+  };
+
+  const handleDownload = (id: string) => {
     window.open(`${API_URL}/api/proposals/${id}/pdf`, '_blank');
   };
 
@@ -128,14 +135,14 @@ export default function ProposalsPage() {
                             )}
                             {proposal.status === 'DRAFT' && (
                               <button
-                                onClick={() => { sendProposal.mutate(proposal.id); setOpenMenu(null); }}
+                                onClick={() => { setSendProposalTarget(proposal); setOpenMenu(null); }}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                               >
-                                <Send className="h-4 w-4" /> Mark as sent
+                                <Send className="h-4 w-4" /> Send to client
                               </button>
                             )}
                             <button
-                              onClick={() => { handleDownload(proposal.id, proposal.proposalNumber); setOpenMenu(null); }}
+                              onClick={() => { handleDownload(proposal.id); setOpenMenu(null); }}
                               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                             >
                               <Download className="h-4 w-4" /> Download PDF
@@ -158,6 +165,19 @@ export default function ProposalsPage() {
         </div>
       )}
 
+      {/* Send confirmation modal */}
+      {sendProposalTarget && (
+        <ConfirmModal
+          title="Send proposal to client"
+          description={`This will email the proposal to ${sendProposalTarget.client.name} (${sendProposalTarget.client.email}). Their client status will be updated to "Proposal Sent".`}
+          confirmLabel="Send proposal"
+          loading={sendProposalMutation.isPending}
+          onConfirm={handleSend}
+          onClose={() => setSendProposalTarget(null)}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
       {deleteProposal && (
         <ConfirmModal
           title="Delete proposal"

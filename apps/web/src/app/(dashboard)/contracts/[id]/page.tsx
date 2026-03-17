@@ -20,6 +20,7 @@ export default function ContractDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const router   = useRouter();
   const [showDelete, setShowDelete] = useState(false);
+  const [showSend,   setShowSend]   = useState(false);
   const [copied,     setCopied]     = useState(false);
 
   const { data, isLoading } = useContract(id);
@@ -31,6 +32,11 @@ export default function ContractDetailPage() {
   const handleDelete = async () => {
     await deleteContract.mutateAsync(id);
     router.push('/contracts');
+  };
+
+  const handleSend = async () => {
+    await sendContract.mutateAsync(id);
+    setShowSend(false);
   };
 
   const handleDownload = () => {
@@ -93,15 +99,17 @@ export default function ContractDetailPage() {
           {contract.status === 'DRAFT' && (
             <Button
               size="sm"
-              variant="secondary"
-              onClick={() => sendContract.mutate(id)}
+              onClick={() => setShowSend(true)}
               loading={sendContract.isPending}
             >
-              <Send className="h-4 w-4" /> Mark as sent
+              <Send className="h-4 w-4" /> Send to client
             </Button>
           )}
           <Button size="sm" variant="secondary" onClick={copySignLink}>
-            {copied ? <><Check className="h-4 w-4 text-green-500" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy sign link</>}
+            {copied
+              ? <><Check className="h-4 w-4 text-green-500" /> Copied!</>
+              : <><Copy className="h-4 w-4" /> Copy sign link</>
+            }
           </Button>
           <Button size="sm" variant="secondary" onClick={handleDownload}>
             <Download className="h-4 w-4" /> PDF
@@ -146,7 +154,10 @@ export default function ContractDetailPage() {
                   onClick={copySignLink}
                   className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors shrink-0"
                 >
-                  {copied ? <><Check className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+                  {copied
+                    ? <><Check className="h-3.5 w-3.5" /> Copied!</>
+                    : <><Copy className="h-3.5 w-3.5" /> Copy</>
+                  }
                 </button>
               </div>
             </div>
@@ -252,11 +263,22 @@ export default function ContractDetailPage() {
           {/* Actions */}
           <div className="card p-5 space-y-2">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Actions</h3>
+            {contract.status === 'DRAFT' && (
+              <button
+                onClick={() => setShowSend(true)}
+                className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <Send className="h-4 w-4 text-gray-400" /> Send to client
+              </button>
+            )}
             <button
               onClick={copySignLink}
               className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
             >
-              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-gray-400" />}
+              {copied
+                ? <Check className="h-4 w-4 text-green-500" />
+                : <Copy className="h-4 w-4 text-gray-400" />
+              }
               {copied ? 'Copied!' : 'Copy sign link'}
             </button>
             <button
@@ -265,14 +287,6 @@ export default function ContractDetailPage() {
             >
               <Download className="h-4 w-4 text-gray-400" /> Download PDF
             </button>
-            {contract.status === 'DRAFT' && (
-              <button
-                onClick={() => sendContract.mutate(id)}
-                className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <Send className="h-4 w-4 text-gray-400" /> Mark as sent
-              </button>
-            )}
             <button
               onClick={() => setShowDelete(true)}
               className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-danger hover:bg-red-50 rounded-lg transition-colors"
@@ -283,6 +297,19 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
+      {/* Send confirmation modal */}
+      {showSend && (
+        <ConfirmModal
+          title="Send contract to client"
+          description={`This will email the contract to ${contract.client.name} (${contract.client.email}) with a link to review and sign it.`}
+          confirmLabel="Send contract"
+          loading={sendContract.isPending}
+          onConfirm={handleSend}
+          onClose={() => setShowSend(false)}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
       {showDelete && (
         <ConfirmModal
           title="Delete contract"

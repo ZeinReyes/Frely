@@ -19,7 +19,7 @@ export default function ProposalDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const router   = useRouter();
   const [showDelete, setShowDelete] = useState(false);
-  const [copied,     setCopied]     = useState(false);
+  const [showSend,   setShowSend]   = useState(false);
 
   const { data, isLoading }  = useProposal(id);
   const sendProposal         = useSendProposal();
@@ -30,6 +30,11 @@ export default function ProposalDetailPage() {
   const handleDelete = async () => {
     await deleteProposal.mutateAsync(id);
     router.push('/proposals');
+  };
+
+  const handleSend = async () => {
+    await sendProposal.mutateAsync(id);
+    setShowSend(false);
   };
 
   const handleDownload = () => {
@@ -89,11 +94,10 @@ export default function ProposalDetailPage() {
           {proposal.status === 'DRAFT' && (
             <Button
               size="sm"
-              variant="secondary"
-              onClick={() => sendProposal.mutate(id)}
+              onClick={() => setShowSend(true)}
               loading={sendProposal.isPending}
             >
-              <Send className="h-4 w-4" /> Mark as sent
+              <Send className="h-4 w-4" /> Send to client
             </Button>
           )}
           <Button size="sm" variant="secondary" onClick={handleDownload}>
@@ -245,10 +249,10 @@ export default function ProposalDetailPage() {
             </button>
             {proposal.status === 'DRAFT' && (
               <button
-                onClick={() => sendProposal.mutate(id)}
+                onClick={() => setShowSend(true)}
                 className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
               >
-                <Send className="h-4 w-4 text-gray-400" /> Mark as sent
+                <Send className="h-4 w-4 text-gray-400" /> Send to client
               </button>
             )}
             <button
@@ -261,6 +265,19 @@ export default function ProposalDetailPage() {
         </div>
       </div>
 
+      {/* Send confirmation modal */}
+      {showSend && (
+        <ConfirmModal
+          title="Send proposal to client"
+          description={`This will email the proposal to ${proposal.client.name} (${proposal.client.email}). Their client status will be updated to "Proposal Sent".`}
+          confirmLabel="Send proposal"
+          loading={sendProposal.isPending}
+          onConfirm={handleSend}
+          onClose={() => setShowSend(false)}
+        />
+      )}
+
+      {/* Delete confirmation modal */}
       {showDelete && (
         <ConfirmModal
           title="Delete proposal"

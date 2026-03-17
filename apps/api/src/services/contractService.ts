@@ -2,6 +2,7 @@ import prisma from '../config/database';
 import { notifyContractSigned } from './notificationService';
 import { AppError } from '../utils/AppError';
 import { generatePDF } from '../utils/pdfGenerator';
+import { sendContractEmail, sendPortalWelcomeEmail  } from './emailService';
 import type {
   CreateContractInput,
   UpdateContractInput,
@@ -20,7 +21,7 @@ function generateNumber(prefix: string): string {
 // ─────────────────────────────────────────
 export async function listContracts(userId: string, clientId?: string) {
   const contracts = await prisma.contract.findMany({
-    where: { userId, ...(clientId && { clientId }) },
+    where:   { userId, ...(clientId && { clientId }) },
     orderBy: { createdAt: 'desc' },
     include: {
       client: { select: { id: true, name: true, email: true, company: true } },
@@ -34,7 +35,7 @@ export async function listContracts(userId: string, clientId?: string) {
 // ─────────────────────────────────────────
 export async function getContractById(userId: string, contractId: string) {
   const contract = await prisma.contract.findFirst({
-    where: { id: contractId, userId },
+    where:   { id: contractId, userId },
     include: {
       client:   { select: { id: true, name: true, email: true, company: true } },
       project:  { select: { id: true, name: true } },
@@ -50,7 +51,7 @@ export async function getContractById(userId: string, contractId: string) {
 // ─────────────────────────────────────────
 export async function getContractBySignToken(signToken: string) {
   const contract = await prisma.contract.findFirst({
-    where: { signToken },
+    where:   { signToken },
     include: {
       client: { select: { id: true, name: true, email: true, company: true } },
     },
@@ -121,13 +122,56 @@ export async function updateContract(
 // SEND CONTRACT
 // ─────────────────────────────────────────
 export async function sendContract(userId: string, contractId: string) {
-  const contract = await prisma.contract.findFirst({ where: { id: contractId, userId } });
+  const contract = await prisma.contract.findFirst({
+    where:   { id: contractId, userId },
+    include: { client: true },
+  });
   if (!contract) throw AppError.notFound('Contract not found');
+  if (!contract.client.email) throw AppError.badRequest('Client has no email address');
 
+  // Fetch freelancer branding
+  const [user, branding] = await Promise.all([
+    prisma.user.findUnique({
+      where:  { id: userId },
+      select: { name: true, email: true },
+    }),
+    prisma.branding.findUnique({
+      where:  { userId },
+      select: { companyName: true, primaryColor: true },
+    }),
+  ]);
+
+  const senderName  = branding?.companyName || user?.name || 'Your Freelancer';
+  const senderEmail = user?.email           || '';
+  const brandColor  = branding?.primaryColor || '#6C63FF';
+  const signingUrl  = `${process.env.FRONTEND_URL}/sign/${contract.signToken}`;
+
+  // Send email — appears from the freelancer, not Frely
+  await sendContractEmail({
+    to:         contract.client.email,
+    clientName: contract.client.name,
+    senderName,
+    senderEmail,
+    title:      contract.title,
+    signingUrl,
+    brandColor,
+  });
+
+  // Mark contract as sent
   const updated = await prisma.contract.update({
     where: { id: contractId },
     data:  { status: 'SENT', sentAt: new Date() },
+    include: {
+      client: { select: { id: true, name: true, email: true, company: true } },
+    },
   });
+
+  // Auto-upgrade client status: LEAD → PROPOSAL_SENT if they somehow skipped proposal step
+  await prisma.client.updateMany({
+    where: { id: contract.clientId, userId, status: 'LEAD' },
+    data:  { status: 'PROPOSAL_SENT' },
+  });
+
   return updated;
 }
 
@@ -138,7 +182,7 @@ export async function signContract(signToken: string, input: SignContractInput) 
   const contract = await prisma.contract.findFirst({ where: { signToken } });
   if (!contract) throw AppError.notFound('Contract not found');
   if (contract.status === 'SIGNED') throw AppError.badRequest('Contract already signed');
-
+ 
   const updated = await prisma.contract.update({
     where: { id: contract.id },
     data: {
@@ -151,13 +195,67 @@ export async function signContract(signToken: string, input: SignContractInput) 
       client: { select: { id: true, name: true, email: true, company: true } },
     },
   });
-  // Notify freelancer
+ 
+  // Contract signed → client becomes ACTIVE
+  await prisma.client.updateMany({
+    where: {
+      id:     contract.clientId,
+      status: { in: ['LEAD', 'PROPOSAL_SENT'] },
+    },
+    data: { status: 'ACTIVE' },
+  });
+ 
+  // Fetch everything needed for the welcome email in parallel
+  const [user, branding, client] = await Promise.all([
+    prisma.user.findUnique({
+      where:  { id: contract.userId },
+      select: { name: true, email: true },
+    }),
+    prisma.branding.findUnique({
+      where:  { userId: contract.userId },
+      select: { companyName: true, primaryColor: true },
+    }),
+    prisma.client.findUnique({
+      where:  { id: contract.clientId },
+      select: { name: true, email: true, portalToken: true },
+    }),
+  ]);
+ 
+  const senderName  = branding?.companyName || user?.name || 'Your Freelancer';
+  const senderEmail = user?.email           || '';
+  const brandColor  = branding?.primaryColor || '#6C63FF';
+ 
+  // Send portal welcome email with signed contract PDF attached — fire and forget
+  if (client?.email && client?.portalToken) {
+    // Generate the signed contract PDF to attach
+    // We do this inside the async block so it doesn't block the sign response
+    Promise.resolve().then(async () => {
+      try {
+        const pdfBuffer = await getContractPDF(contract.userId, contract.id);
+ 
+        await sendPortalWelcomeEmail({
+          to:             client.email,
+          clientName:     client.name,
+          senderName,
+          senderEmail,
+          portalUrl:      `${process.env.FRONTEND_URL}/portal/${client.portalToken}`,
+          brandColor,
+          pdfBuffer,
+          contractNumber: contract.contractNumber,
+        });
+      } catch (err) {
+        console.error('Failed to send portal welcome email:', err);
+      }
+    });
+  }
+ 
+  // Notify the freelancer
   await notifyContractSigned(updated.userId, {
     id:            updated.id,
     title:         updated.title,
     signatureName: updated.signatureName || input.signatureName,
   }).catch(() => {});
-
+ 
   return updated;
 }
 
@@ -175,7 +273,7 @@ export async function deleteContract(userId: string, contractId: string) {
 // ─────────────────────────────────────────
 export async function getContractPDF(userId: string, contractId: string): Promise<Buffer> {
   const contract = await prisma.contract.findFirst({
-    where: { id: contractId, userId },
+    where:   { id: contractId, userId },
     include: { client: true },
   });
   if (!contract) throw AppError.notFound('Contract not found');
@@ -188,23 +286,23 @@ export async function getContractPDF(userId: string, contractId: string): Promis
   const freelancerName = branding?.companyName || user?.name || 'Freelancer';
 
   const pdf = await generatePDF({
-    type:           'contract',
-    title:          contract.title,
-    number:         contract.contractNumber,
-    clientName:     contract.client.name,
-    clientEmail:    contract.client.email,
-    clientCompany:  contract.client.company || undefined,
+    type:          'contract',
+    title:         contract.title,
+    number:        contract.contractNumber,
+    clientName:    contract.client.name,
+    clientEmail:   contract.client.email,
+    clientCompany: contract.client.company || undefined,
     freelancerName,
-    brandColor:     branding?.primaryColor || undefined,
-    body:           contract.body,
-    value:          contract.value ? Number(contract.value) : undefined,
-    currency:       contract.currency,
-    startDate:      contract.startDate?.toISOString(),
-    endDate:        contract.endDate?.toISOString(),
-    signatureName:  contract.signatureName || undefined,
-    signatureDate:  contract.signatureDate?.toISOString(),
-    signedAt:       contract.signedAt?.toISOString(),
-    createdAt:      contract.createdAt.toISOString(),
+    brandColor:    branding?.primaryColor || undefined,
+    body:          contract.body,
+    value:         contract.value ? Number(contract.value) : undefined,
+    currency:      contract.currency,
+    startDate:     contract.startDate?.toISOString(),
+    endDate:       contract.endDate?.toISOString(),
+    signatureName: contract.signatureName || undefined,
+    signatureDate: contract.signatureDate?.toISOString(),
+    signedAt:      contract.signedAt?.toISOString(),
+    createdAt:     contract.createdAt.toISOString(),
   });
 
   return pdf;
