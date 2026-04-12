@@ -1,5 +1,7 @@
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
+import { sendInvoiceEmail } from './emailService';
+import { scheduleReminders } from '../jobs/reminderQueue';
 import type {
   CreateMilestoneInput,
   UpdateMilestoneInput,
@@ -73,7 +75,6 @@ export async function createMilestone(userId: string, input: CreateMilestoneInpu
 
   if (!project) throw AppError.notFound('Project not found');
 
-  // Get highest order to append at end
   const lastMilestone = await prisma.milestone.findFirst({
     where:   { projectId: input.projectId },
     orderBy: { order: 'desc' },
@@ -140,8 +141,8 @@ export async function updateMilestoneStatus(
   // Auto-complete all tasks when milestone is marked completed
   if (input.status === 'COMPLETED') {
     await prisma.task.updateMany({
-      where:  { milestoneId, status: { not: 'DONE' } },
-      data:   { status: 'DONE' },
+      where: { milestoneId, status: { not: 'DONE' } },
+      data:  { status: 'DONE' },
     });
   }
 
@@ -153,6 +154,58 @@ export async function updateMilestoneStatus(
       tasks:  { select: { id: true, status: true } },
     },
   });
+
+  // ── Auto-send linked invoice when milestone is completed ──────────
+  if (input.status === 'COMPLETED') {
+    const linkedInvoice = await prisma.invoice.findFirst({
+      where: {
+        milestoneId: milestoneId,
+        status:             'DRAFT',
+      },
+      include: {
+        client: { select: { name: true, email: true } },
+        user:   { select: { name: true, email: true } },
+      },
+    });
+
+    if (linkedInvoice) {
+      await prisma.invoice.update({
+        where: { id: linkedInvoice.id },
+        data:  { status: 'SENT', sentAt: new Date() },
+      });
+
+      const branding = await prisma.branding.findUnique({
+        where: { userId: linkedInvoice.userId },
+      });
+
+      const formattedTotal = new Intl.NumberFormat('en-US', {
+        style:    'currency',
+        currency: linkedInvoice.currency,
+      }).format(Number(linkedInvoice.total));
+
+      const formattedDue = linkedInvoice.dueDate
+        ? new Date(linkedInvoice.dueDate).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric',
+          })
+        : 'Upon receipt';
+
+      await sendInvoiceEmail(
+        linkedInvoice.client.email,
+        linkedInvoice.client.name,
+        linkedInvoice.invoiceNumber,
+        formattedTotal,
+        formattedDue,
+        `${process.env.NEXT_PUBLIC_APP_URL}/invoices/${linkedInvoice.id}`,
+        branding?.companyName || linkedInvoice.user.name,
+        linkedInvoice.user.email,
+        branding?.primaryColor || '#6C63FF',
+      ).catch(() => {});
+
+      if (linkedInvoice.dueDate) {
+        await scheduleReminders(linkedInvoice.id, linkedInvoice.dueDate).catch(() => {});
+      }
+    }
+  }
 
   return updated;
 }
@@ -167,7 +220,6 @@ export async function deleteMilestone(userId: string, milestoneId: string) {
 
   if (!milestone) throw AppError.notFound('Milestone not found');
 
-  // Unlink tasks before deleting
   await prisma.task.updateMany({
     where: { milestoneId },
     data:  { milestoneId: null },
@@ -190,7 +242,6 @@ export async function reorderMilestones(
 
   if (!project) throw AppError.notFound('Project not found');
 
-  // Update all orders in a transaction
   await prisma.$transaction(
     input.milestones.map(({ id, order }) =>
       prisma.milestone.update({

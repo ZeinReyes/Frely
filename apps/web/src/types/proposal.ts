@@ -1,11 +1,18 @@
 export type ProposalStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'ACCEPTED' | 'DECLINED';
 export type ContractStatus = 'DRAFT' | 'SENT' | 'VIEWED' | 'SIGNED' | 'CANCELLED';
+export type PaymentSchedule = 'UPFRONT' | 'SPLIT_50_50' | 'MILESTONE' | 'CUSTOM';
 
 export interface LineItem {
   description: string;
   quantity:    number;
   unitPrice:   number;
   amount:      number;
+}
+
+export interface PaymentMilestone {
+  label:   string;
+  percent: number;
+  dueOn?:  string;
 }
 
 export interface Proposal {
@@ -48,6 +55,9 @@ export interface Contract {
   startDate?:     string;
   endDate?:       string;
   status:         ContractStatus;
+  paymentSchedule?:   PaymentSchedule;
+  depositPercent?:    number;
+  paymentMilestones?: PaymentMilestone[];
   signatureName?: string;
   signatureDate?: string;
   signedAt?:      string;
@@ -62,26 +72,29 @@ export interface Contract {
 }
 
 export interface CreateProposalInput {
-  clientId:     string;
-  projectId?:   string;
-  title:        string;
+  clientId:      string;
+  projectId?:    string;
+  title:         string;
   introduction?: string;
-  scope?:       string;
-  terms?:       string;
-  lineItems:    LineItem[];
-  currency?:    string;
-  validUntil?:  string;
-  notes?:       string;
+  scope?:        string;
+  terms?:        string;
+  lineItems:     LineItem[];
+  currency?:     string;
+  validUntil?:   string;
+  notes?:        string;
 }
 
 export interface CreateContractInput {
-  clientId:   string;
-  projectId?: string;
-  proposalId?: string;
-  title:      string;
-  body:       string;
-  currency?:  string;
-  value?:     number;
-  startDate?: string;
-  endDate?:   string;
+  clientId:           string;
+  projectId?:         string;
+  proposalId?:        string;
+  title:              string;
+  body:               string;
+  currency?:          string;
+  value?:             number;
+  startDate?:         string;
+  endDate?:           string;
+  paymentSchedule?:   PaymentSchedule;
+  depositPercent?:    number;
+  paymentMilestones?: PaymentMilestone[];
 }

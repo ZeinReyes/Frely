@@ -336,6 +336,9 @@ model Contract {
   startDate      DateTime?
   endDate        DateTime?
   status         String    @default("DRAFT")
+  paymentSchedule   String?   
+  depositPercent    Float?     
+  paymentMilestones Json? 
   signatureName  String?
   signatureDate  DateTime?
   signedAt       DateTime?
@@ -372,6 +375,8 @@ model Invoice {
   currency         String        @default("USD")
   status           InvoiceStatus @default(DRAFT)
   dueDate          DateTime?
+  paymentMilestoneId String?
+  sentAt           DateTime?
   paidAt           DateTime?
   stripeInvoiceId  String?
   stripePaymentUrl String?

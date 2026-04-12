@@ -85,7 +85,14 @@ export default function LandingPage() {
   const content = useLandingContent();
   const plans   = usePlans();
 
-  const isLoading = !content;
+  // ── FIX: derive safe accessors so content.hero.badge never throws ──────────
+  const isLoading        = content === undefined;
+  const hero             = content?.hero;
+  const stats            = content?.stats            ?? [];
+  const features         = content?.features         ?? [];
+  const testimonials     = content?.testimonials     ?? [];
+  const cta              = content?.cta;
+  // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const theme = getTheme();
@@ -149,7 +156,7 @@ export default function LandingPage() {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary/10 border border-primary-100 dark:border-primary/20 text-primary text-xs font-semibold rounded-full mb-6 min-w-[180px] justify-center">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            {isLoading ? <Skeleton className="h-3 w-32" /> : content.hero.badge}
+            {isLoading ? <Skeleton className="h-3 w-32" /> : hero?.badge}
           </div>
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-gray-900 dark:text-white leading-[1.08] tracking-tight mb-6 min-h-[1.08em]">
             {isLoading ? (
@@ -159,7 +166,7 @@ export default function LandingPage() {
               </div>
             ) : (
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-500">
-                {content.hero.title}
+                {hero?.title}
               </span>
             )}
           </h1>
@@ -169,25 +176,25 @@ export default function LandingPage() {
                 <Skeleton className="h-5 w-full" />
                 <Skeleton className="h-5 w-5/6 mx-auto" />
               </span>
-            ) : content.hero.subtitle}
+            ) : hero?.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Link
               href="/register"
               className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-600 transition-all text-base shadow-xl shadow-primary/30 hover:-translate-y-0.5"
             >
-              {isLoading ? <Skeleton className="h-4 w-24" /> : content.hero.cta1} <ArrowRight className="h-4 w-4" />
+              {isLoading ? <Skeleton className="h-4 w-24" /> : hero?.cta1} <ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#features"
               className="flex items-center gap-2 px-8 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-colors text-base"
             >
               <Play className="h-4 w-4 text-primary fill-primary" />
-              {isLoading ? <Skeleton className="h-4 w-28" /> : content.hero.cta2}
+              {isLoading ? <Skeleton className="h-4 w-28" /> : hero?.cta2}
             </a>
           </div>
           <p className="text-xs text-gray-400 dark:text-gray-500 min-h-[1rem]">
-            {isLoading ? <Skeleton className="h-3 w-48 mx-auto" /> : content.hero.note}
+            {isLoading ? <Skeleton className="h-3 w-48 mx-auto" /> : hero?.note}
           </p>
         </div>
 
@@ -269,7 +276,7 @@ export default function LandingPage() {
                   <Skeleton className="h-4 w-32 mx-auto" />
                 </div>
               ))
-            : content.stats.map(({ stat, label }) => (
+            : stats.map(({ stat, label }) => (
                 <div key={stat}>
                   <p className="text-3xl font-extrabold text-gray-900 dark:text-white">{stat}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{label}</p>
@@ -299,7 +306,7 @@ export default function LandingPage() {
                     <Skeleton className="h-3 w-5/6" />
                   </div>
                 ))
-              : content.features.map(({ icon, title, desc }) => {
+              : features.map(({ icon, title, desc }) => {
                   const Icon = ICON_MAP[icon] ?? Zap;
                   return (
                     <div key={title} className="group p-6 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-primary-200 dark:hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-200">
@@ -343,7 +350,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                 ))
-              : content.testimonials.map(({ name, role, avatar, text }) => (
+              : testimonials.map(({ name, role, avatar, text }) => (
                   <div key={name} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex gap-1 mb-4">
                       {[...Array(5)].map((_, i) => (
@@ -482,23 +489,23 @@ export default function LandingPage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-extrabold text-white mb-4 leading-tight min-h-[2.5rem]">
-            {isLoading ? <Skeleton className="h-10 w-3/4 mx-auto" /> : content.cta.title}
+            {isLoading ? <Skeleton className="h-10 w-3/4 mx-auto" /> : cta?.title}
           </h2>
           <p className="text-primary-100 mb-10 text-lg max-w-xl mx-auto min-h-[1.75rem]">
-            {isLoading ? <Skeleton className="h-5 w-2/3 mx-auto" /> : content.cta.subtitle}
+            {isLoading ? <Skeleton className="h-5 w-2/3 mx-auto" /> : cta?.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
               className="flex items-center gap-2 px-8 py-3.5 bg-white text-primary font-bold rounded-xl hover:bg-primary-50 transition-colors text-base shadow-xl"
             >
-              {isLoading ? <Skeleton className="h-4 w-32" /> : content.cta.cta1} <ArrowRight className="h-4 w-4" />
+              {isLoading ? <Skeleton className="h-4 w-32" /> : cta?.cta1} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
               className="flex items-center gap-2 px-8 py-3.5 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-colors text-base border border-white/20"
             >
-              {isLoading ? <Skeleton className="h-4 w-32" /> : content.cta.cta2}
+              {isLoading ? <Skeleton className="h-4 w-32" /> : cta?.cta2}
             </Link>
           </div>
         </div>

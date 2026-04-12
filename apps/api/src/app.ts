@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { toNodeHandler } from 'better-auth/node';
 import fileUpload from 'express-fileupload';
+import cron from 'node-cron';
 
 import { auth } from './config/auth';
 import { errorHandler } from './middleware/errorHandler';
@@ -165,9 +166,27 @@ app.use('/api/admin', authenticate, requireAdmin, adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start reminder worker
+// ─────────────────────────────────────────
+// Background Workers & Cron Jobs
+// ─────────────────────────────────────────
+
+// Start BullMQ reminder worker
 import('./jobs/reminderQueue').then(({ startReminderWorker }) => {
   startReminderWorker();
 }).catch(err => console.error('Failed to start reminder worker:', err));
+
+// Every day at 8:00 AM — send DRAFT invoices that are due today
+cron.schedule('0 8 * * *', async () => {
+  console.log('⏰ Running invoice auto-send job...');
+  const { sendDueInvoices } = await import('./jobs/invoiceScheduler');
+  await sendDueInvoices().catch(err => console.error('invoiceScheduler error:', err));
+});
+
+// Every day at 00:01 AM — mark SENT invoices past due date as OVERDUE
+cron.schedule('1 0 * * *', async () => {
+  console.log('⏰ Running overdue sweep...');
+  const { sweepOverdueInvoices } = await import('./jobs/reminderQueue');
+  await sweepOverdueInvoices().catch(err => console.error('overdueSweep error:', err));
+});
 
 export default app;

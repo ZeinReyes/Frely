@@ -91,15 +91,54 @@ export async function sendInvoiceEmail(
   total: string,
   dueDate: string,
   paymentUrl: string,
-  // Optional freelancer branding
   senderName?: string,
   senderEmail?: string,
   brandColor = '#6C63FF',
+  // ── Optional context ──────────────────
+  context?: {
+    projectName?:    string;
+    milestoneName?:  string;
+    paymentSchedule?: string;
+    invoiceTitle?:   string;
+  },
 ): Promise<void> {
+  const scheduleLabel: Record<string, string> = {
+    UPFRONT:     'Full payment',
+    SPLIT_50_50: '50/50 split',
+    MILESTONE:   'Milestone-based',
+    CUSTOM:      'Custom payment schedule',
+  };
+
+  const contextBlock = context ? `
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <p style="margin:0 0 8px;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Invoice details</p>
+      ${context.invoiceTitle ? `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;">
+          <span style="color:#6b7280;font-size:13px;">Description</span>
+          <span style="color:#111827;font-size:13px;font-weight:500;">${context.invoiceTitle}</span>
+        </div>` : ''}
+      ${context.projectName ? `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;">
+          <span style="color:#6b7280;font-size:13px;">Project</span>
+          <span style="color:#111827;font-size:13px;font-weight:500;">${context.projectName}</span>
+        </div>` : ''}
+      ${context.milestoneName ? `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;">
+          <span style="color:#6b7280;font-size:13px;">Milestone</span>
+          <span style="color:#111827;font-size:13px;font-weight:500;">${context.milestoneName}</span>
+        </div>` : ''}
+      ${context.paymentSchedule ? `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <span style="color:#6b7280;font-size:13px;">Payment type</span>
+          <span style="color:#111827;font-size:13px;font-weight:500;">${scheduleLabel[context.paymentSchedule] || context.paymentSchedule}</span>
+        </div>` : ''}
+    </div>
+  ` : '';
+
   await sendEmail({
     to,
     name:     clientName,
-    subject:  `Invoice ${invoiceNumber}`,
+    subject:  `Invoice ${invoiceNumber}${context?.projectName ? ` — ${context.projectName}` : ''}`,
     fromName: senderName,
     replyTo:  senderEmail,
     html: `
@@ -114,6 +153,9 @@ export async function sendInvoiceEmail(
           <div style="padding:32px;">
             <h2 style="color:#111827;margin:0 0 8px;">Invoice ${invoiceNumber}</h2>
             <p style="color:#6b7280;margin:0 0 20px;">Hi ${clientName}, you have a new invoice waiting for payment.</p>
+
+            ${contextBlock}
+
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:24px;">
               <p style="margin:0;color:#6b7280;font-size:13px;">Amount due</p>
               <p style="margin:4px 0;font-size:24px;font-weight:700;color:${brandColor};">${total}</p>

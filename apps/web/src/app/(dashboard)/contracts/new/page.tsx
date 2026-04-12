@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useCreateContract } from '@/hooks/useProposals';
 import { useClients } from '@/hooks/useClients';
 import { AIContractModal } from '@/components/ui/AIContractModal';
+import { PaymentSchedulePicker, type PaymentScheduleType } from '@/components/ui/PaymentSchedulePicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -54,25 +55,31 @@ export default function NewContractPage() {
   const clients = clientsData?.data || [];
   const [showAI, setShowAI] = useState(false);
 
+  // Payment schedule state
+  const [paymentSchedule,    setPaymentSchedule]    = useState<PaymentScheduleType>('');
+  const [depositPercent,     setDepositPercent]     = useState(50);
+  const [paymentMilestones,  setPaymentMilestones]  = useState<{ label: string; percent: number; dueOn: string }[]>([]);
+
   const {
-    register,
-    handleSubmit,
-    setValue,
+    register, handleSubmit, setValue, watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      currency: 'USD',
-      body:     DEFAULT_CONTRACT_BODY,
-    },
+    defaultValues: { currency: 'USD', body: DEFAULT_CONTRACT_BODY },
   });
+
+  const contractValue = Number(watch('value')) || 0;
+  const currency      = watch('currency') || 'USD';
 
   const onSubmit = async (data: FormData) => {
     await createContract.mutateAsync({
       ...data,
-      value:     data.value ? Number(data.value) : undefined,
-      startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
-      endDate:   data.endDate   ? new Date(data.endDate).toISOString()   : undefined,
+      value:             data.value ? Number(data.value) : undefined,
+      startDate:         data.startDate ? new Date(data.startDate).toISOString() : undefined,
+      endDate:           data.endDate   ? new Date(data.endDate).toISOString()   : undefined,
+      paymentSchedule:   paymentSchedule || undefined,
+      depositPercent:    (paymentSchedule === 'CUSTOM' || paymentSchedule === 'MILESTONE') ? depositPercent : undefined,
+      paymentMilestones: paymentSchedule === 'MILESTONE' ? paymentMilestones : undefined,
     });
     router.push('/contracts');
   };
@@ -90,11 +97,12 @@ export default function NewContractPage() {
         <h1 className="page-title mb-6">New Contract</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Basic Details */}
           <div className="card p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-900">Contract Details</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Contract Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Client <span className="text-danger">*</span>
                 </label>
                 <select className="input" {...register('clientId')}>
@@ -106,13 +114,13 @@ export default function NewContractPage() {
                 {errors.clientId && <p className="text-xs text-danger">{errors.clientId.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">Currency</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
                 <select className="input" {...register('currency')}>
                   <option value="USD">USD — US Dollar</option>
                   <option value="EUR">EUR — Euro</option>
                   <option value="GBP">GBP — British Pound</option>
-                  <option value="CAD">CAD — Canadian Dollar</option>
                   <option value="PHP">PHP — Philippine Peso</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
                 </select>
               </div>
             </div>
@@ -124,32 +132,35 @@ export default function NewContractPage() {
               {...register('title')}
             />
             <div className="grid grid-cols-3 gap-4">
-              <Input
-                label="Contract value"
-                type="number"
-                placeholder="5000"
-                {...register('value')}
-              />
-              <Input
-                label="Start date"
-                type="date"
-                {...register('startDate')}
-              />
-              <Input
-                label="End date"
-                type="date"
-                {...register('endDate')}
-              />
+              <Input label="Contract value" type="number" placeholder="5000" {...register('value')} />
+              <Input label="Start date" type="date" {...register('startDate')} />
+              <Input label="End date"   type="date" {...register('endDate')} />
             </div>
           </div>
 
+          {/* Payment Schedule */}
+          <div className="card p-6">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Payment Schedule</h2>
+            <PaymentSchedulePicker
+              currency={currency}
+              contractValue={contractValue}
+              schedule={paymentSchedule}
+              depositPercent={depositPercent}
+              milestones={paymentMilestones}
+              onScheduleChange={setPaymentSchedule}
+              onDepositChange={setDepositPercent}
+              onMilestonesChange={setPaymentMilestones}
+            />
+          </div>
+
+          {/* Contract Body */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contract Body <span className="text-danger">*</span>
                 </label>
-                <p className="text-xs text-gray-500">Edit the template below to match your terms</p>
+                <p className="text-xs text-gray-500 mt-0.5">Edit the template below to match your terms</p>
               </div>
               <button
                 type="button"

@@ -32,16 +32,25 @@ export const sendProposalSchema = z.object({
 // ─────────────────────────────────────────
 // CONTRACT
 // ─────────────────────────────────────────
+export const paymentMilestoneSchema = z.object({
+  label:   z.string(),
+  percent: z.number().min(1).max(100),
+  dueOn:   z.string().optional(), // 'signing', 'completion', or ISO date
+});
+
 export const createContractSchema = z.object({
-  clientId:   z.string().uuid('Invalid client ID'),
-  projectId:  z.string().uuid().optional(),
-  proposalId: z.string().uuid().optional(),
-  title:      z.string().min(1).max(200).trim(),
-  body:       z.string().min(1, 'Contract body is required'),
-  currency:   z.string().length(3).default('USD'),
-  value:      z.number().positive().optional(),
-  startDate:  z.string().datetime().optional(),
-  endDate:    z.string().datetime().optional(),
+  clientId:          z.string().uuid('Invalid client ID'),
+  projectId:         z.string().uuid().optional(),
+  proposalId:        z.string().uuid().optional(),
+  title:             z.string().min(1).max(200).trim(),
+  body:              z.string().min(1, 'Contract body is required'),
+  currency:          z.string().length(3).default('USD'),
+  value:             z.number().positive().optional(),
+  startDate:         z.string().datetime().optional(),
+  endDate:           z.string().datetime().optional(),
+  paymentSchedule: z.enum(['UPFRONT', 'SPLIT_50_50', 'MILESTONE', 'CUSTOM']).optional(),
+  depositPercent:    z.number().min(1).max(100).optional(),
+  paymentMilestones: z.array(paymentMilestoneSchema).optional(),
 });
 
 export const updateContractSchema = createContractSchema.partial();

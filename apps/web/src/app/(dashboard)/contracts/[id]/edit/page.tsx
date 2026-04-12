@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import { useContract, useUpdateContract } from '@/hooks/useProposals';
 import { AIContractModal } from '@/components/ui/AIContractModal';
+import { PaymentSchedulePicker, type PaymentScheduleType } from '@/components/ui/PaymentSchedulePicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -29,13 +30,21 @@ export default function EditContractPage() {
   const updateContract      = useUpdateContract(id);
   const [showAI, setShowAI] = useState(false);
 
+  // Payment schedule state
+  const [paymentSchedule,   setPaymentSchedule]   = useState<PaymentScheduleType>('');
+  const [depositPercent,    setDepositPercent]     = useState(50);
+  const [paymentMilestones, setPaymentMilestones]  = useState<{ label: string; percent: number; dueOn: string }[]>([]);
+
   const {
-    register, handleSubmit, reset, setValue,
+    register, handleSubmit, reset, setValue, watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { currency: 'USD' },
   });
+
+  const contractValue = Number(watch('value')) || 0;
+  const currency      = watch('currency') || 'USD';
 
   useEffect(() => {
     const contract = data?.contract;
@@ -48,14 +57,27 @@ export default function EditContractPage() {
       startDate: contract.startDate ? contract.startDate.split('T')[0] : '',
       endDate:   contract.endDate   ? contract.endDate.split('T')[0]   : '',
     });
+    // Restore payment schedule
+    if (contract.paymentSchedule) {
+      setPaymentSchedule(contract.paymentSchedule as PaymentScheduleType);
+    }
+    if (contract.depositPercent) {
+      setDepositPercent(contract.depositPercent);
+    }
+    if (contract.paymentMilestones) {
+      setPaymentMilestones(contract.paymentMilestones as { label: string; percent: number; dueOn: string }[]);
+    }
   }, [data, reset]);
 
   const onSubmit = async (formData: FormData) => {
     await updateContract.mutateAsync({
       ...formData,
-      value:     formData.value ? Number(formData.value) : undefined,
-      startDate: formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
-      endDate:   formData.endDate   ? new Date(formData.endDate).toISOString()   : undefined,
+      value:             formData.value ? Number(formData.value) : undefined,
+      startDate:         formData.startDate ? new Date(formData.startDate).toISOString() : undefined,
+      endDate:           formData.endDate   ? new Date(formData.endDate).toISOString()   : undefined,
+      paymentSchedule:   paymentSchedule || undefined,
+      depositPercent:    (paymentSchedule === 'CUSTOM' || paymentSchedule === 'MILESTONE') ? depositPercent : undefined,
+      paymentMilestones: paymentSchedule === 'MILESTONE' ? paymentMilestones : undefined,
     });
     router.push(`/contracts/${id}`);
   };
@@ -90,11 +112,12 @@ export default function EditContractPage() {
         <h1 className="page-title mb-6">Edit Contract</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Contract Details */}
           <div className="card p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-900">Contract Details</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Contract Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">Currency</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
                 <select className="input" {...register('currency')}>
                   <option value="USD">USD — US Dollar</option>
                   <option value="EUR">EUR — Euro</option>
@@ -117,9 +140,25 @@ export default function EditContractPage() {
             </div>
           </div>
 
+          {/* Payment Schedule */}
+          <div className="card p-6">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Payment Schedule</h2>
+            <PaymentSchedulePicker
+              currency={currency}
+              contractValue={contractValue}
+              schedule={paymentSchedule}
+              depositPercent={depositPercent}
+              milestones={paymentMilestones}
+              onScheduleChange={setPaymentSchedule}
+              onDepositChange={setDepositPercent}
+              onMilestonesChange={setPaymentMilestones}
+            />
+          </div>
+
+          {/* Contract Body */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Contract Body <span className="text-danger">*</span>
               </label>
               <button
