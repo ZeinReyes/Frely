@@ -22,6 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           id={inputId}
+          suppressHydrationWarning
           className={cn(
             'input',
             error && 'border-danger focus:ring-danger',
