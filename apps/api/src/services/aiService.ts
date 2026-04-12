@@ -1,12 +1,24 @@
 /**
  * OpenRouter AI Service
  * Docs: https://openrouter.ai/docs
- * Free models: meta-llama/llama-3.1-8b-instruct:free, mistralai/mistral-7b-instruct:free
  */
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
-const DEFAULT_MODEL      = process.env.AI_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
 const APP_URL            = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// Fallback chain — first healthy model wins.
+// If AI_MODEL is set in .env, it's added as first choice but still falls back to the rest.
+const MODEL_FALLBACKS = [
+  ...(process.env.AI_MODEL ? [process.env.AI_MODEL] : []),
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'deepseek/deepseek-r1-distill-qwen-14b:free',
+].filter((v, i, arr) => arr.indexOf(v) === i); // dedupe
+
+const RETRY_ATTEMPTS = 2;
+const RETRY_BASE_MS  = 1000;
 
 interface Message {
   role:    'system' | 'user' | 'assistant';
@@ -14,13 +26,16 @@ interface Message {
 }
 
 interface OpenRouterResponse {
-  choices: {
-    message: { content: string };
-  }[];
+  choices: { message: { content: string } }[];
+  error?:  { message: string; code: number };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(res => setTimeout(res, ms));
 }
 
 // ─────────────────────────────────────────
-// CORE COMPLETION
+// CORE COMPLETION (with fallback + retry)
 // ─────────────────────────────────────────
 export async function complete(
   messages: Message[],
@@ -30,29 +45,87 @@ export async function complete(
     throw new Error('OPENROUTER_API_KEY is not configured in .env');
   }
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method:  'POST',
-    headers: {
-      'Authorization':    `Bearer ${OPENROUTER_API_KEY}`,
-      'Content-Type':     'application/json',
-      'HTTP-Referer':     APP_URL,
-      'X-Title':          'Frely',
-    },
-    body: JSON.stringify({
-      model:       options?.model       || DEFAULT_MODEL,
-      max_tokens:  options?.maxTokens   || 2000,
-      temperature: options?.temperature ?? 0.7,
-      messages,
-    }),
-  });
+  // Caller-specified model is tried first, then falls back to the rest of the chain
+  const models = options?.model
+    ? [options.model, ...MODEL_FALLBACKS.filter(m => m !== options.model)]
+    : MODEL_FALLBACKS;
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenRouter error: ${err}`);
+  let lastError: Error = new Error('No models available');
+
+  for (const model of models) {
+    for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
+      let data: OpenRouterResponse;
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method:  'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type':  'application/json',
+            'HTTP-Referer':  APP_URL,
+            'X-Title':       'Frely',
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens:  options?.maxTokens   || 2000,
+            temperature: options?.temperature ?? 0.7,
+            messages,
+          }),
+        });
+
+        data = await response.json() as OpenRouterResponse;
+      } catch (networkErr) {
+        console.error(`[aiService] Network error for ${model}:`, networkErr);
+        lastError = networkErr as Error;
+        break;
+      }
+
+      const errCode    = data.error?.code;
+      const errMessage = data.error?.message || 'Unknown error';
+
+      if (errCode === 404 || errCode === 503) {
+        console.warn(`[aiService] Model unavailable (${errCode}), skipping: ${model}`);
+        lastError = new Error(errMessage);
+        break;
+      }
+
+      if (errCode === 429) {
+        if (attempt === RETRY_ATTEMPTS) {
+          console.warn(`[aiService] Rate limit exhausted for ${model}, trying next model`);
+          lastError = new Error(errMessage);
+          break;
+        }
+        const delay = RETRY_BASE_MS * attempt;
+        console.warn(`[aiService] Rate limited on ${model}, retrying in ${delay}ms (${attempt}/${RETRY_ATTEMPTS})`);
+        await sleep(delay);
+        continue;
+      }
+
+      if (data.error) {
+        console.warn(`[aiService] Provider error on ${model} [code=${errCode}]: ${errMessage}`);
+        if (attempt < RETRY_ATTEMPTS) {
+          await sleep(RETRY_BASE_MS);
+          continue;
+        }
+        lastError = new Error(`[${model}] ${errMessage}`);
+        break;
+      }
+
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) {
+        console.warn(`[aiService] Empty response from ${model}`);
+        lastError = new Error(`Empty response from ${model}`);
+        break;
+      }
+
+      if (model !== models[0]) {
+        console.info(`[aiService] Served by fallback model: ${model}`);
+      }
+      return content;
+    }
   }
 
-  const data = await response.json() as OpenRouterResponse;
-  return data.choices[0]?.message?.content || '';
+  throw lastError;
 }
 
 // ─────────────────────────────────────────
@@ -99,8 +172,7 @@ Make the pricing realistic for a freelancer. Include 3-5 line items.`;
   const result = await complete([{ role: 'user', content: prompt }], { temperature: 0.7 });
 
   try {
-    const clean = result.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean) as ProposalAIOutput;
+    return JSON.parse(result.replace(/```json|```/g, '').trim()) as ProposalAIOutput;
   } catch {
     throw new Error('Failed to parse AI proposal response');
   }
@@ -146,12 +218,12 @@ export interface EmailAIInput {
 
 export async function generateClientEmail(input: EmailAIInput): Promise<{ subject: string; body: string }> {
   const scenarioDescriptions: Record<EmailScenario, string> = {
-    follow_up_invoice: `Follow up on unpaid invoice ${input.invoiceNumber || ''} for ${input.amount || ''}`,
-    project_update:    `Project status update for ${input.projectName || 'the project'}`,
-    request_feedback:  `Request feedback/testimonial from client`,
+    follow_up_invoice:  `Follow up on unpaid invoice ${input.invoiceNumber || ''} for ${input.amount || ''}`,
+    project_update:     `Project status update for ${input.projectName || 'the project'}`,
+    request_feedback:   `Request feedback/testimonial from client`,
     project_completion: `Announce project completion for ${input.projectName || 'the project'}`,
-    payment_overdue:   `Politely remind about overdue payment of ${input.amount || ''} for invoice ${input.invoiceNumber || ''}`,
-    custom:            input.context || 'Write a professional email',
+    payment_overdue:    `Politely remind about overdue payment of ${input.amount || ''} for invoice ${input.invoiceNumber || ''}`,
+    custom:             input.context || 'Write a professional email',
   };
 
   const prompt = `Write a professional, friendly email from a freelancer to a client.
@@ -172,8 +244,7 @@ Keep it professional but warm. Be concise. Do not include placeholders like [You
   const result = await complete([{ role: 'user', content: prompt }], { temperature: 0.7 });
 
   try {
-    const clean = result.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean) as { subject: string; body: string };
+    return JSON.parse(result.replace(/```json|```/g, '').trim()) as { subject: string; body: string };
   } catch {
     throw new Error('Failed to parse AI email response');
   }
@@ -183,17 +254,17 @@ Keep it professional but warm. Be concise. Do not include placeholders like [You
 // GENERATE PROJECT SUMMARY
 // ─────────────────────────────────────────
 export interface ProjectSummaryInput {
-  projectName:  string;
-  clientName:   string;
-  status:       string;
-  progress:     number;
-  tasksDone:    number;
-  tasksTotal:   number;
-  milestones:   { title: string; status: string }[];
-  hoursLogged:  number;
+  projectName:    string;
+  clientName:     string;
+  status:         string;
+  progress:       number;
+  tasksDone:      number;
+  tasksTotal:     number;
+  milestones:     { title: string; status: string }[];
+  hoursLogged:    number;
   freelancerName: string;
-  startDate?:   string;
-  endDate?:     string;
+  startDate?:     string;
+  endDate?:       string;
 }
 
 export async function generateProjectSummary(input: ProjectSummaryInput): Promise<string> {
@@ -207,7 +278,7 @@ Tasks: ${input.tasksDone}/${input.tasksTotal} completed
 Hours logged: ${input.hoursLogged}h
 Freelancer Name: ${input.freelancerName}
 ${input.startDate ? `Start date: ${input.startDate}` : ''}
-${input.endDate ? `Due date: ${input.endDate}` : ''}
+${input.endDate   ? `Due date: ${input.endDate}`     : ''}
 Milestones: ${input.milestones.map(m => `${m.title} (${m.status})`).join(', ')}
 
 Write a 2-3 paragraph professional summary. Be positive, clear, and informative.
@@ -237,8 +308,7 @@ Generate 2-5 realistic line items with fair pricing. No explanations.`;
   const result = await complete([{ role: 'user', content: prompt }], { temperature: 0.5 });
 
   try {
-    const clean = result.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean) as { description: string; quantity: number; unitPrice: number; amount: number }[];
+    return JSON.parse(result.replace(/```json|```/g, '').trim()) as { description: string; quantity: number; unitPrice: number; amount: number }[];
   } catch {
     throw new Error('Failed to parse AI line items response');
   }
